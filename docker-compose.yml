@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  food-analyzer:
+    build: .
+    container_name: food-health-analyzer
+    ports:
+      - "7860:7860"
+    environment:
+      - USDA_API_KEY=${USDA_API_KEY:-DEMO_KEY}
+    volumes:
+      - ./models:/app/models
+      - ./examples:/app/examples
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
