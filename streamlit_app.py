@@ -42,6 +42,10 @@ class FoodHealthAnalyzer:
     
     def preprocess_image(self, img):
         """Preprocess image for model input"""
+        # Convert to RGB if needed (handles PNG transparency)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        
         # Resize image
         img = img.resize(self.img_size)
         img_array = image.img_to_array(img)
