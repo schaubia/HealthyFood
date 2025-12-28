@@ -1,17 +1,14 @@
 """
 Food Health Analyzer
-A web application that analyzes food images and provides nutritional information
+Uses Vision Transformer (ViT) fine-tuned on Food-101 dataset
 """
 
 import streamlit as st
-import tensorflow as tf
-from tensorflow.keras.applications import ResNet50
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
-import numpy as np
+from transformers import AutoFeatureExtractor, AutoModelForImageClassification
 from PIL import Image
 import requests
 import os
+import torch
 
 # Page configuration
 st.set_page_config(
@@ -26,44 +23,37 @@ USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
 
 class FoodHealthAnalyzer:
     def __init__(self):
-        """Initialize the food analyzer with ResNet50 model"""
-        self.img_size = (224, 224)
-        self.model = self.build_model()
+        """Initialize the food analyzer with ViT model fine-tuned on Food-101"""
+        self.feature_extractor, self.model = self.build_model()
         
     @st.cache_resource
     def build_model(_self):
-        """Build model using ResNet50 with ImageNet weights"""
-        base_model = ResNet50(
-            weights='imagenet',
-            include_top=True,
-            input_shape=(224, 224, 3)
-        )
-        return base_model
-    
-    def preprocess_image(self, img):
-        """Preprocess image for model input"""
-        # Convert to RGB if needed (handles PNG transparency)
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-        
-        # Resize image
-        img = img.resize(self.img_size)
-        img_array = image.img_to_array(img)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = preprocess_input(img_array)
-        return img_array
+        """Build model using Vision Transformer fine-tuned on Food-101"""
+        model_name = "nateraw/food"  # ViT fine-tuned on Food-101 dataset
+        feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
+        model = AutoModelForImageClassification.from_pretrained(model_name)
+        return feature_extractor, model
     
     def predict_food(self, img, top_k=5):
         """Predict food item from image"""
-        img_array = self.preprocess_image(img)
-        predictions = self.model.predict(img_array, verbose=0)
-        decoded = decode_predictions(predictions, top=top_k)[0]
+        # Preprocess image
+        inputs = self.feature_extractor(images=img, return_tensors="pt")
+        
+        # Get predictions
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+            logits = outputs.logits
+        
+        # Get top k predictions
+        probs = torch.nn.functional.softmax(logits, dim=-1)
+        top_probs, top_indices = torch.topk(probs, top_k)
         
         results = []
-        for _, label, confidence in decoded:
+        for prob, idx in zip(top_probs[0], top_indices[0]):
+            label = self.model.config.id2label[idx.item()]
             results.append({
                 'name': label,
-                'confidence': float(confidence)
+                'confidence': prob.item()
             })
         
         return results
@@ -192,7 +182,7 @@ def main():
     Upload a photo of food to identify it and get nutritional information!
     
     **This app uses AI to recognize food items and provides:**
-    - 🍽️ Food identification with confidence scores
+    - 🍽️ Food identification with confidence scores (101 food categories)
     - 📊 Nutritional information from USDA database
     - 💚 Health rating based on nutritional content
     """)
@@ -210,8 +200,10 @@ def main():
         st.markdown("---")
         st.markdown("### About")
         st.markdown("""
-        This app uses **ResNet50** trained on ImageNet to recognize food items 
-        and provides nutritional analysis using data from the **USDA FoodData Central** database.
+        This app uses **Vision Transformer (ViT)** fine-tuned on the **Food-101** dataset 
+        to recognize 101 different food categories with high accuracy!
+        
+        Nutritional data comes from the **USDA FoodData Central** database.
         """)
     
     # File uploader
@@ -224,6 +216,10 @@ def main():
     if uploaded_file is not None:
         # Display the uploaded image
         img = Image.open(uploaded_file)
+        
+        # Convert to RGB if needed (handles PNG transparency)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
         
         col1, col2 = st.columns([1, 1])
         
@@ -370,9 +366,15 @@ def main():
         st.markdown("### 📸 How it works:")
         st.markdown("""
         1. Upload a clear photo of food
-        2. AI analyzes the image using ResNet50
+        2. AI analyzes the image using Vision Transformer trained on Food-101
         3. Get nutritional information from USDA database
         4. Receive a health rating and insights
+        """)
+        
+        st.markdown("### 🍕 Recognizable Foods (101 categories):")
+        st.markdown("""
+        The AI can recognize common foods including: apple pie, pizza, hamburger, 
+        sushi, ice cream, french fries, chocolate cake, salad, steak, and many more!
         """)
 
 if __name__ == "__main__":
