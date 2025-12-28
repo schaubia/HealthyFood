@@ -134,7 +134,11 @@ class HybridFoodAnalyzer:
         try:
             import wikipediaapi
             
-            wiki = wikipediaapi.Wikipedia('en')
+            # Proper user agent as required by Wikipedia
+            wiki = wikipediaapi.Wikipedia(
+                user_agent='FoodHealthAnalyzer/1.0 (Educational App)',
+                language='en'
+            )
             
             # Search for the food page
             page = wiki.page(food_name)
