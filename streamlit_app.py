@@ -119,33 +119,37 @@ class HybridFoodAnalyzer:
         return vit_results
     
     def get_recipe_ingredients(self, food_name):
-        """Scrape the web to find main ingredients for a dish"""
+        """Get ingredients using Wikipedia API and fallback database"""
+        
+        # First, try predefined database for common dishes
+        ingredients = self.get_ingredients_from_database(food_name)
+        if ingredients:
+            st.info(f"✅ Found ingredients from database")
+            return {
+                'ingredients': ingredients,
+                'source': 'Built-in database'
+            }
+        
+        # If not in database, try Wikipedia
         try:
-            # Use DuckDuckGo search (no API key needed)
-            from duckduckgo_search import DDGS
+            import wikipediaapi
             
-            # Search for recipe
-            search_query = f"{food_name} recipe main ingredients"
+            wiki = wikipediaapi.Wikipedia('en')
             
-            st.write(f"🔍 Searching for: {search_query}")  # Debug
+            # Search for the food page
+            page = wiki.page(food_name)
             
-            with DDGS() as ddgs:
-                results = list(ddgs.text(search_query, max_results=5))
+            if not page.exists():
+                # Try with "cuisine" or "food" suffix
+                page = wiki.page(f"{food_name} (food)")
             
-            st.write(f"📝 Found {len(results)} search results")  # Debug
-            
-            if not results:
-                st.warning("No search results found")
+            if not page.exists():
+                st.warning(f"No Wikipedia page found for '{food_name}'")
                 return None
             
-            # Extract ingredients from search results
-            ingredients_text = ""
-            for result in results:
-                snippet = result.get('body', '')
-                title = result.get('title', '')
-                ingredients_text += f"{title} {snippet} "
-            
-            st.write(f"📄 Extracted text length: {len(ingredients_text)} characters")  # Debug
+            # Get page text
+            text = page.text.lower()
+            st.write(f"📖 Found Wikipedia article")
             
             # Common food ingredients to look for
             common_ingredients = [
@@ -157,16 +161,15 @@ class HybridFoodAnalyzer:
                 'parmesan', 'mozzarella', 'cheddar', 'bacon', 'ham',
                 'mushroom', 'spinach', 'broccoli', 'lettuce', 'cucumber',
                 'ricotta', 'meat', 'ground beef', 'sausage', 'marinara',
-                'sauce', 'parsley', 'thyme', 'rosemary'
+                'sauce', 'parsley', 'thyme', 'rosemary', 'vanilla', 'chocolate'
             ]
             
             # Find mentioned ingredients
             found_ingredients = []
-            ingredients_lower = ingredients_text.lower()
             
             for ingredient in common_ingredients:
-                if ingredient in ingredients_lower:
-                    # Avoid duplicates (e.g., 'egg' and 'eggs')
+                if ingredient in text:
+                    # Avoid duplicates
                     if ingredient == 'eggs' and 'egg' in found_ingredients:
                         continue
                     if ingredient == 'egg' and 'eggs' in found_ingredients:
@@ -175,26 +178,111 @@ class HybridFoodAnalyzer:
                     if ingredient not in found_ingredients:
                         found_ingredients.append(ingredient)
             
-            st.write(f"✅ Found {len(found_ingredients)} ingredients: {found_ingredients[:5]}")  # Debug
-            
-            # Limit to top 15 most commonly found
-            found_ingredients = found_ingredients[:15]
-            
             if found_ingredients:
+                st.success(f"✅ Found {len(found_ingredients)} ingredients from Wikipedia")
                 return {
-                    'ingredients': found_ingredients,
-                    'source': results[0].get('href', 'web search')
+                    'ingredients': found_ingredients[:15],
+                    'source': 'Wikipedia'
                 }
             else:
-                st.warning("No common ingredients detected in search results")
-            
-            return None
+                st.warning("No ingredients detected in Wikipedia article")
+                return None
             
         except Exception as e:
-            st.error(f"Error scraping ingredients: {str(e)}")
-            import traceback
-            st.code(traceback.format_exc())
+            st.error(f"Error accessing Wikipedia: {str(e)}")
             return None
+    
+    def get_ingredients_from_database(self, food_name):
+        """Built-in ingredient database for common dishes"""
+        
+        # Normalize food name
+        food_lower = food_name.lower().strip()
+        
+        # Common dishes with known ingredients
+        ingredient_db = {
+            # Breakfast
+            'omelette': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
+            'omelet': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
+            'scrambled eggs': ['eggs', 'butter', 'milk', 'salt', 'pepper'],
+            'fried egg': ['eggs', 'oil', 'salt', 'pepper'],
+            'pancake': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
+            'waffle': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
+            'french toast': ['bread', 'eggs', 'milk', 'sugar', 'cinnamon', 'butter'],
+            
+            # Italian
+            'pizza': ['flour', 'yeast', 'tomato', 'mozzarella', 'olive oil', 'basil'],
+            'pasta': ['wheat', 'flour', 'eggs', 'salt', 'water'],
+            'spaghetti': ['pasta', 'tomato', 'garlic', 'olive oil', 'basil'],
+            'lasagna': ['pasta', 'beef', 'tomato', 'ricotta', 'mozzarella', 'parmesan'],
+            'ravioli': ['pasta', 'ricotta', 'cheese', 'eggs', 'spinach', 'flour'],
+            'risotto': ['rice', 'butter', 'parmesan', 'onion', 'chicken broth', 'white wine'],
+            'carbonara': ['pasta', 'eggs', 'bacon', 'parmesan', 'pepper', 'salt'],
+            
+            # American
+            'hamburger': ['beef', 'bread', 'lettuce', 'tomato', 'onion', 'cheese', 'pickles'],
+            'cheeseburger': ['beef', 'bread', 'cheese', 'lettuce', 'tomato', 'onion'],
+            'hot dog': ['sausage', 'bread', 'mustard', 'ketchup', 'onion'],
+            'sandwich': ['bread', 'meat', 'cheese', 'lettuce', 'tomato', 'mayo'],
+            'french fries': ['potato', 'oil', 'salt'],
+            'mashed potato': ['potato', 'butter', 'milk', 'salt', 'pepper'],
+            
+            # Asian
+            'sushi': ['rice', 'fish', 'seaweed', 'vinegar', 'soy sauce', 'wasabi'],
+            'ramen': ['noodles', 'broth', 'egg', 'pork', 'onion', 'soy sauce'],
+            'fried rice': ['rice', 'eggs', 'soy sauce', 'vegetables', 'oil', 'garlic'],
+            'pad thai': ['rice noodles', 'shrimp', 'eggs', 'peanuts', 'lime', 'fish sauce'],
+            'spring roll': ['rice paper', 'shrimp', 'vegetables', 'noodles', 'herbs'],
+            
+            # Mexican
+            'tacos': ['tortilla', 'beef', 'lettuce', 'cheese', 'tomato', 'salsa'],
+            'burrito': ['tortilla', 'rice', 'beans', 'meat', 'cheese', 'salsa'],
+            'quesadilla': ['tortilla', 'cheese', 'chicken', 'peppers', 'onion'],
+            'nachos': ['tortilla chips', 'cheese', 'beans', 'salsa', 'sour cream', 'jalapeño'],
+            
+            # Desserts
+            'cake': ['flour', 'sugar', 'eggs', 'butter', 'milk', 'baking powder'],
+            'chocolate cake': ['flour', 'sugar', 'eggs', 'butter', 'cocoa', 'milk'],
+            'cheesecake': ['cream cheese', 'sugar', 'eggs', 'graham crackers', 'butter'],
+            'ice cream': ['milk', 'cream', 'sugar', 'vanilla', 'eggs'],
+            'cookie': ['flour', 'sugar', 'butter', 'eggs', 'chocolate chips'],
+            'brownie': ['chocolate', 'butter', 'sugar', 'eggs', 'flour'],
+            'donut': ['flour', 'sugar', 'eggs', 'milk', 'butter', 'yeast'],
+            'creme brulee': ['cream', 'eggs', 'sugar', 'vanilla'],
+            'tiramisu': ['mascarpone', 'eggs', 'coffee', 'sugar', 'ladyfingers', 'cocoa'],
+            'apple pie': ['apples', 'flour', 'sugar', 'butter', 'cinnamon'],
+            
+            # Salads
+            'caesar salad': ['lettuce', 'parmesan', 'croutons', 'caesar dressing', 'chicken'],
+            'greek salad': ['lettuce', 'tomato', 'cucumber', 'feta', 'olives', 'olive oil'],
+            'salad': ['lettuce', 'tomato', 'cucumber', 'onion', 'olive oil', 'vinegar'],
+            
+            # Soups
+            'chicken soup': ['chicken', 'broth', 'carrot', 'celery', 'onion', 'noodles'],
+            'tomato soup': ['tomato', 'cream', 'onion', 'garlic', 'basil', 'butter'],
+            'minestrone': ['pasta', 'beans', 'tomato', 'carrot', 'celery', 'onion'],
+            
+            # Meat dishes
+            'steak': ['beef', 'salt', 'pepper', 'butter', 'garlic'],
+            'chicken breast': ['chicken', 'salt', 'pepper', 'oil', 'herbs'],
+            'pork chop': ['pork', 'salt', 'pepper', 'oil', 'garlic'],
+            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter'],
+            
+            # Breakfast
+            'croissant': ['flour', 'butter', 'yeast', 'sugar', 'milk', 'eggs'],
+            'bagel': ['flour', 'yeast', 'salt', 'sugar', 'water'],
+            'muffin': ['flour', 'sugar', 'eggs', 'milk', 'butter', 'baking powder']
+        }
+        
+        # Try exact match
+        if food_lower in ingredient_db:
+            return ingredient_db[food_lower]
+        
+        # Try partial match
+        for dish_name, ingredients in ingredient_db.items():
+            if dish_name in food_lower or food_lower in dish_name:
+                return ingredients
+        
+        return None
     
     def analyze_ingredients_health(self, ingredients):
         """Grade ingredients based on health"""
