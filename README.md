@@ -106,7 +106,7 @@ Modify the `analyze_health()` method in `app.py` to change how foods are rated b
 ## 📊 How It Works
 
 ### Food Recognition
-- Uses ViT
+- Uses ViT and ResNet trained on ImageNet
 - Identifies food items from 101 classes
 - Provides confidence scores for top 5 predictions
 
