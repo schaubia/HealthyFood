@@ -1,5 +1,5 @@
 """
-Food Health Analyzer - Streamlit Version
+Food Health Analyzer
 AI-powered food recognition with nutritional analysis
 """
 
@@ -24,6 +24,7 @@ USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
 HF_API_TOKEN = os.environ.get('HF_TOKEN', None)
 HF_API_URL = "https://api-inference.huggingface.co/models/nateraw/food"
 
+@st.cache_data
 def image_to_bytes(image):
     """Convert PIL Image to bytes"""
     buffered = io.BytesIO()
@@ -46,8 +47,20 @@ def predict_food_hf_api(image):
             timeout=30
         )
         
+        # Debug: Show what we got back
+        st.write(f"Primary API Status: {response.status_code}")
+        
         if response.status_code == 200:
             results = response.json()
+            
+            # Check if results is an error dict
+            if isinstance(results, dict) and 'error' in results:
+                st.warning(f"Model error: {results['error']}")
+                if 'estimated_time' in results:
+                    st.info(f"Model is loading, estimated time: {results['estimated_time']}s. Using fallback...")
+                return predict_food_fallback(image)
+            
+            # Process valid results
             predictions = []
             for item in results[:5]:
                 predictions.append({
@@ -56,10 +69,11 @@ def predict_food_hf_api(image):
                 })
             return predictions
         else:
+            st.warning(f"Primary model returned status {response.status_code}, trying fallback...")
             return predict_food_fallback(image)
             
     except Exception as e:
-        st.warning(f"Primary model unavailable, using fallback: {str(e)}")
+        st.warning(f"Primary model error: {str(e)}, using fallback...")
         return predict_food_fallback(image)
 
 def predict_food_fallback(image):
@@ -80,8 +94,18 @@ def predict_food_fallback(image):
             timeout=30
         )
         
+        st.write(f"Fallback API Status: {response.status_code}")
+        
         if response.status_code == 200:
             results = response.json()
+            
+            # Check if results is an error dict
+            if isinstance(results, dict) and 'error' in results:
+                st.warning(f"Fallback model error: {results['error']}")
+                if 'estimated_time' in results:
+                    st.info(f"Fallback model is loading, estimated time: {results['estimated_time']}s. Using general model...")
+                return predict_food_general(image)
+            
             predictions = []
             for item in results[:5]:
                 predictions.append({
@@ -90,9 +114,11 @@ def predict_food_fallback(image):
                 })
             return predictions
         else:
+            st.warning(f"Fallback model returned status {response.status_code}, trying general model...")
             return predict_food_general(image)
             
     except Exception as e:
+        st.warning(f"Fallback model error: {str(e)}, using general model...")
         return predict_food_general(image)
 
 def predict_food_general(image):
@@ -113,8 +139,18 @@ def predict_food_general(image):
             timeout=30
         )
         
+        st.write(f"General API Status: {response.status_code}")
+        
         if response.status_code == 200:
             results = response.json()
+            
+            # Check if results is an error dict
+            if isinstance(results, dict) and 'error' in results:
+                st.error(f"All models unavailable: {results['error']}")
+                if 'estimated_time' in results:
+                    st.info(f"Model is loading. Please wait {results['estimated_time']}s and try again.")
+                return [{'name': 'Model loading - please try again in a moment', 'confidence': 0.0}]
+            
             predictions = []
             for item in results[:5]:
                 predictions.append({
@@ -123,10 +159,13 @@ def predict_food_general(image):
                 })
             return predictions
         else:
-            return [{'name': 'Unable to classify - please try again', 'confidence': 0.0}]
+            st.error(f"All models returned errors. Status: {response.status_code}")
+            st.info("The models may be loading. Please wait 30 seconds and try again.")
+            return [{'name': 'Models loading - please retry', 'confidence': 0.0}]
             
     except Exception as e:
-        return [{'name': 'Error in classification', 'confidence': 0.0}]
+        st.error(f"Error accessing classification models: {str(e)}")
+        return [{'name': 'Classification error', 'confidence': 0.0}]
 
 def get_usda_nutrition(food_name):
     """Get nutrition information from USDA API"""
