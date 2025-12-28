@@ -2,9 +2,6 @@
 
 An AI-powered web application that analyzes food images and provides detailed nutritional information and health ratings.
 
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13+-orange.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## ✨ Features
 
@@ -109,8 +106,8 @@ Modify the `analyze_health()` method in `app.py` to change how foods are rated b
 ## 📊 How It Works
 
 ### Food Recognition
-- Uses **ResNet50** pre-trained on ImageNet
-- Identifies food items from 1000+ classes
+- Uses ViT
+- Identifies food items from 101 classes
 - Provides confidence scores for top 5 predictions
 
 ### Nutritional Analysis
@@ -133,23 +130,6 @@ The app analyzes nutrients and assigns ratings:
 - High cholesterol
 
 
-## 🤝 Contributing
-
-Contributions are welcome! Here's how you can help:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Ideas for Contributions
-- Add more example images
-- Improve health rating algorithm
-- Add support for multiple food items in one image
-- Implement barcode scanning
-- Add meal planning features
-- Support for different languages
 
 ## 📝 API Rate Limits
 
@@ -178,20 +158,9 @@ If you encounter rate limit errors, consider:
 **Issue**: High memory usage
 - **Solution**: Close other applications or use a machine with more RAM (recommended: 4GB+)
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
-- **TensorFlow** and **Keras** teams for the deep learning framework
 - **USDA FoodData Central** for nutritional data
-- **Gradio** team for the amazing web interface library
-- **ImageNet** for the pre-trained model weights
-
-## 📧 Contact
-
-Have questions or suggestions? Feel free to open an issue or reach out!
 
 ## 🔮 Future Enhancements
 
