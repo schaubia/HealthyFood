@@ -5,4 +5,4 @@ torch
 pillow
 requests
 numpy
-duckduckgo-search
+wikipedia-api
