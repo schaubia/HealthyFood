@@ -118,6 +118,99 @@ class HybridFoodAnalyzer:
         # Otherwise return VIT results
         return vit_results
     
+    def get_recipe_ingredients(self, food_name):
+        """Scrape the web to find main ingredients for a dish"""
+        try:
+            # Use DuckDuckGo search (no API key needed)
+            from duckduckgo_search import DDGS
+            
+            # Search for recipe
+            search_query = f"{food_name} recipe main ingredients"
+            
+            with DDGS() as ddgs:
+                results = list(ddgs.text(search_query, max_results=3))
+            
+            if not results:
+                return None
+            
+            # Extract ingredients from search results
+            ingredients_text = ""
+            for result in results:
+                snippet = result.get('body', '')
+                title = result.get('title', '')
+                ingredients_text += f"{title} {snippet} "
+            
+            # Common food ingredients to look for
+            common_ingredients = [
+                'egg', 'eggs', 'milk', 'cheese', 'butter', 'oil', 'olive oil',
+                'flour', 'wheat', 'rice', 'pasta', 'bread', 'sugar', 'salt',
+                'pepper', 'onion', 'garlic', 'tomato', 'chicken', 'beef', 'pork',
+                'fish', 'shrimp', 'potato', 'carrot', 'cream', 'yogurt',
+                'lemon', 'lime', 'herbs', 'spices', 'basil', 'oregano',
+                'parmesan', 'mozzarella', 'cheddar', 'bacon', 'ham',
+                'mushroom', 'spinach', 'broccoli', 'lettuce', 'cucumber'
+            ]
+            
+            # Find mentioned ingredients
+            found_ingredients = []
+            ingredients_lower = ingredients_text.lower()
+            
+            for ingredient in common_ingredients:
+                if ingredient in ingredients_lower and ingredient not in found_ingredients:
+                    found_ingredients.append(ingredient)
+            
+            # Limit to top 10 most commonly found
+            found_ingredients = found_ingredients[:10]
+            
+            if found_ingredients:
+                return {
+                    'ingredients': found_ingredients,
+                    'source': results[0].get('href', 'web search')
+                }
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error scraping ingredients: {e}")
+            return None
+    
+    def analyze_ingredients_health(self, ingredients):
+        """Grade ingredients based on health"""
+        if not ingredients:
+            return [], []
+        
+        # Categorize ingredients
+        healthy = []
+        unhealthy = []
+        
+        healthy_items = [
+            'egg', 'eggs', 'chicken', 'fish', 'shrimp', 'mushroom', 
+            'spinach', 'broccoli', 'lettuce', 'cucumber', 'tomato',
+            'carrot', 'onion', 'garlic', 'herbs', 'basil', 'oregano',
+            'yogurt', 'olive oil', 'lemon', 'lime'
+        ]
+        
+        unhealthy_items = [
+            'sugar', 'butter', 'cream', 'bacon', 'ham', 'cheddar',
+            'mozzarella', 'parmesan', 'oil', 'fried', 'deep fried'
+        ]
+        
+        neutral_items = [
+            'flour', 'wheat', 'rice', 'pasta', 'bread', 'potato',
+            'milk', 'cheese', 'salt', 'pepper', 'spices'
+        ]
+        
+        for ingredient in ingredients:
+            ing_lower = ingredient.lower()
+            
+            if any(h in ing_lower for h in healthy_items):
+                healthy.append(ingredient)
+            elif any(u in ing_lower for u in unhealthy_items):
+                unhealthy.append(ingredient)
+            # Neutral items are not categorized but still shown
+        
+        return healthy, unhealthy
+    
     def get_usda_nutrition(self, food_name):
         """Get nutrition information from USDA API"""
         try:
@@ -289,9 +382,13 @@ def main():
                 predictions = analyzer.predict_food(img)
                 
                 status_text.text("📊 Fetching nutritional data...")
-                progress_bar.progress(66)
+                progress_bar.progress(50)
                 top_food = predictions[0]['name'].replace('_', ' ')
                 nutrition_data = analyzer.get_usda_nutrition(top_food)
+                
+                status_text.text("🔍 Searching for ingredients...")
+                progress_bar.progress(75)
+                ingredients_data = analyzer.get_recipe_ingredients(top_food)
                 
                 status_text.text("✅ Analysis complete!")
                 progress_bar.progress(100)
@@ -317,6 +414,49 @@ def main():
         
         st.markdown("---")
         
+        # Ingredients Section (if found)
+        if ingredients_data:
+            st.subheader("🥘 Main Ingredients")
+            
+            ingredients_list = ingredients_data['ingredients']
+            healthy_ings, unhealthy_ings = analyzer.analyze_ingredients_health(ingredients_list)
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown("**All Ingredients:**")
+                for ing in ingredients_list:
+                    st.write(f"• {ing.title()}")
+            
+            with col2:
+                if healthy_ings:
+                    st.markdown("**✅ Healthy:**")
+                    for ing in healthy_ings:
+                        st.write(f"• {ing.title()}")
+                else:
+                    st.markdown("**✅ Healthy:**")
+                    st.write("_None identified_")
+            
+            with col3:
+                if unhealthy_ings:
+                    st.markdown("**⚠️ Watch Out:**")
+                    for ing in unhealthy_ings:
+                        st.write(f"• {ing.title()}")
+                else:
+                    st.markdown("**⚠️ Watch Out:**")
+                    st.write("_None identified_")
+            
+            # Ingredients health summary
+            if len(healthy_ings) > len(unhealthy_ings):
+                st.success("💚 This dish contains mostly healthy ingredients!")
+            elif len(unhealthy_ings) > len(healthy_ings):
+                st.warning("⚠️ This dish contains ingredients to consume in moderation.")
+            else:
+                st.info("ℹ️ This dish has a balanced mix of ingredients.")
+            
+            st.markdown("---")
+        
+        # Nutritional Information
         if nutrition_data:
             nutrients = nutrition_data['nutrients']
             health_rating, emoji = analyzer.analyze_health(nutrients)
@@ -326,6 +466,15 @@ def main():
             with col1:
                 st.subheader("📊 Nutritional Information")
                 st.write(f"**Food:** {nutrition_data['name']}")
+                
+                # Extract and display calories prominently
+                calories = "Not available"
+                for key in nutrients.keys():
+                    if 'energy' in key.lower() or 'calor' in key.lower():
+                        calories = nutrients[key]
+                        break
+                
+                st.metric(label="🔥 Calories (per 100g)", value=calories)
                 st.write(f"**Health Rating:** {emoji} {health_rating}")
             
             with col2:
