@@ -1,6 +1,6 @@
 """
-Food Health Analyzer
-Uses Vision Transformer (ViT) fine-tuned on Food-101 dataset
+Food Health Analyzer - Hybrid Version
+Uses both Food-101 (for dishes) and ResNet50 (for ingredients/fruits)
 """
 
 import streamlit as st
@@ -9,6 +9,11 @@ from PIL import Image
 import requests
 import os
 import torch
+import tensorflow as tf
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
+import numpy as np
 
 # Page configuration
 st.set_page_config(
@@ -21,42 +26,97 @@ st.set_page_config(
 USDA_API_KEY = os.environ.get('USDA_API_KEY', 'DEMO_KEY')
 USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
 
-class FoodHealthAnalyzer:
+class HybridFoodAnalyzer:
     def __init__(self):
-        """Initialize the food analyzer with ViT model fine-tuned on Food-101"""
-        self.feature_extractor, self.model = self.build_model()
+        """Initialize with both models for better coverage"""
+        self.vit_extractor, self.vit_model = self.build_vit_model()
+        self.resnet_model = self.build_resnet_model()
+        self.img_size = (224, 224)
         
     @st.cache_resource
-    def build_model(_self):
-        """Build model using Vision Transformer fine-tuned on Food-101"""
-        model_name = "nateraw/food"  # ViT fine-tuned on Food-101 dataset
+    def build_vit_model(_self):
+        """Build ViT model for prepared dishes"""
+        model_name = "nateraw/food"
         feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
         model = AutoModelForImageClassification.from_pretrained(model_name)
         return feature_extractor, model
     
-    def predict_food(self, img, top_k=5):
-        """Predict food item from image"""
-        # Preprocess image
-        inputs = self.feature_extractor(images=img, return_tensors="pt")
-        
-        # Get predictions
+    @st.cache_resource
+    def build_resnet_model(_self):
+        """Build ResNet50 for ingredients and fruits"""
+        return ResNet50(weights='imagenet', include_top=True, input_shape=(224, 224, 3))
+    
+    def predict_with_vit(self, img):
+        """Predict using ViT Food-101 model"""
+        inputs = self.vit_extractor(images=img, return_tensors="pt")
         with torch.no_grad():
-            outputs = self.model(**inputs)
+            outputs = self.vit_model(**inputs)
             logits = outputs.logits
         
-        # Get top k predictions
         probs = torch.nn.functional.softmax(logits, dim=-1)
-        top_probs, top_indices = torch.topk(probs, top_k)
+        top_probs, top_indices = torch.topk(probs, 5)
         
         results = []
         for prob, idx in zip(top_probs[0], top_indices[0]):
-            label = self.model.config.id2label[idx.item()]
+            label = self.vit_model.config.id2label[idx.item()]
             results.append({
                 'name': label,
-                'confidence': prob.item()
+                'confidence': prob.item(),
+                'source': 'Food-101'
             })
-        
         return results
+    
+    def predict_with_resnet(self, img):
+        """Predict using ResNet50 ImageNet model"""
+        # Convert to RGB if needed
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        img_resized = img.resize(self.img_size)
+        img_array = image.img_to_array(img_resized)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array = preprocess_input(img_array)
+        
+        predictions = self.resnet_model.predict(img_array, verbose=0)
+        decoded = decode_predictions(predictions, top=5)[0]
+        
+        results = []
+        for _, label, confidence in decoded:
+            results.append({
+                'name': label,
+                'confidence': float(confidence),
+                'source': 'ImageNet'
+            })
+        return results
+    
+    def predict_food(self, img):
+        """Smart prediction using both models"""
+        # Try Food-101 first
+        vit_results = self.predict_with_vit(img)
+        
+        # Try ResNet50 for comparison
+        resnet_results = self.predict_with_resnet(img)
+        
+        # Filter ResNet results for food-related items
+        food_keywords = ['fruit', 'vegetable', 'meat', 'fish', 'berry', 'apple', 'orange', 
+                        'banana', 'pear', 'grape', 'lemon', 'mushroom', 'corn', 'pepper',
+                        'tomato', 'potato', 'carrot', 'broccoli', 'strawberry', 'pizza',
+                        'burger', 'sandwich', 'salad', 'bread', 'cheese', 'chocolate']
+        
+        food_resnet_results = [
+            r for r in resnet_results 
+            if any(keyword in r['name'].lower() for keyword in food_keywords)
+        ]
+        
+        # Combine results intelligently
+        # If top VIT result has low confidence (<0.3), prefer ResNet for simple foods
+        if vit_results[0]['confidence'] < 0.3 and food_resnet_results:
+            # Use ResNet if it found food items
+            if food_resnet_results[0]['confidence'] > 0.5:
+                return food_resnet_results[:5]
+        
+        # Otherwise return VIT results
+        return vit_results
     
     def get_usda_nutrition(self, food_name):
         """Get nutrition information from USDA API"""
@@ -81,7 +141,6 @@ class FoodHealthAnalyzer:
             food = data['foods'][0]
             nutrients = {}
             
-            # Extract key nutrients
             for nutrient in food.get('foodNutrients', []):
                 name = nutrient.get('nutrientName', '')
                 value = nutrient.get('value', 0)
@@ -104,11 +163,9 @@ class FoodHealthAnalyzer:
         if not nutrients:
             return "Unknown", "⚪"
         
-        # Simple health scoring logic
         health_score = 0
         max_score = 0
         
-        # Positive nutrients
         positive_nutrients = {
             'Protein': 2,
             'Fiber, total dietary': 2,
@@ -118,7 +175,6 @@ class FoodHealthAnalyzer:
             'Iron, Fe': 1
         }
         
-        # Negative nutrients
         negative_nutrients = {
             'Total lipid (fat)': -2,
             'Fatty acids, total saturated': -2,
@@ -132,7 +188,7 @@ class FoodHealthAnalyzer:
             if nutrient in nutrients:
                 try:
                     value = float(nutrients[nutrient].split()[0])
-                    if value > 5:  # Significant amount
+                    if value > 5:
                         health_score += weight
                 except:
                     pass
@@ -142,7 +198,6 @@ class FoodHealthAnalyzer:
             if nutrient in nutrients:
                 try:
                     value = float(nutrients[nutrient].split()[0])
-                    # Thresholds for "high" amounts (per 100g)
                     thresholds = {
                         'Total lipid (fat)': 20,
                         'Fatty acids, total saturated': 5,
@@ -155,7 +210,6 @@ class FoodHealthAnalyzer:
                 except:
                     pass
         
-        # Calculate rating
         if max_score == 0:
             return "Unknown", "⚪"
         
@@ -168,45 +222,44 @@ class FoodHealthAnalyzer:
         else:
             return "Unhealthy", "🔴"
 
-# Initialize analyzer (cached to avoid reloading model)
 @st.cache_resource
 def get_analyzer():
-    return FoodHealthAnalyzer()
+    return HybridFoodAnalyzer()
 
 analyzer = get_analyzer()
 
-# Main app
 def main():
     st.title("🍎 Food Health Analyzer")
     st.markdown("""
     Upload a photo of food to identify it and get nutritional information!
     
-    **This app uses AI to recognize food items and provides:**
-    - 🍽️ Food identification with confidence scores (101 food categories)
+    **Features:**
+    - 🍽️ Smart AI recognition (dishes + ingredients)
     - 📊 Nutritional information from USDA database
     - 💚 Health rating based on nutritional content
     """)
     
-    # Sidebar with tips
     with st.sidebar:
         st.header("📝 Tips for Best Results")
         st.markdown("""
         - Use clear, well-lit photos
         - Center the food in the frame
-        - Avoid overly complex dishes
-        - One food item works best
+        - Works best with:
+          - Individual fruits/vegetables
+          - Common prepared dishes
+          - Single food items
         """)
         
         st.markdown("---")
         st.markdown("### About")
         st.markdown("""
-        This app uses **Vision Transformer (ViT)** fine-tuned on the **Food-101** dataset 
-        to recognize 101 different food categories with high accuracy!
+        This app uses **hybrid AI**:
+        - **Food-101 ViT** for prepared dishes
+        - **ResNet50 ImageNet** for fruits, vegetables, and ingredients
         
-        Nutritional data comes from the **USDA FoodData Central** database.
+        Nutritional data from **USDA FoodData Central**.
         """)
     
-    # File uploader
     uploaded_file = st.file_uploader(
         "Choose a food image...", 
         type=['png', 'jpg', 'jpeg'],
@@ -214,10 +267,8 @@ def main():
     )
     
     if uploaded_file is not None:
-        # Display the uploaded image
         img = Image.open(uploaded_file)
         
-        # Convert to RGB if needed (handles PNG transparency)
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
@@ -229,27 +280,22 @@ def main():
         with col2:
             st.subheader("🔍 Analyzing...")
             
-            # Create a progress bar
             progress_bar = st.progress(0)
             status_text = st.empty()
             
             try:
-                # Step 1: Predict food
                 status_text.text("🤖 Identifying food with AI...")
                 progress_bar.progress(33)
                 predictions = analyzer.predict_food(img)
                 
-                # Step 2: Get nutrition
                 status_text.text("📊 Fetching nutritional data...")
                 progress_bar.progress(66)
                 top_food = predictions[0]['name'].replace('_', ' ')
                 nutrition_data = analyzer.get_usda_nutrition(top_food)
                 
-                # Step 3: Complete
                 status_text.text("✅ Analysis complete!")
                 progress_bar.progress(100)
                 
-                # Clear progress indicators after a moment
                 import time
                 time.sleep(0.5)
                 status_text.empty()
@@ -261,18 +307,16 @@ def main():
                 st.error(f"An error occurred: {str(e)}")
                 return
         
-        # Display results
         st.markdown("---")
         
-        # Food Recognition Results
         st.subheader("🍽️ Food Recognition Results")
         for i, pred in enumerate(predictions, 1):
             confidence_pct = pred['confidence'] * 100
-            st.write(f"**{i}.** {pred['name'].replace('_', ' ').title()} - {confidence_pct:.2f}%")
+            source = pred.get('source', 'AI')
+            st.write(f"**{i}.** {pred['name'].replace('_', ' ').title()} - {confidence_pct:.2f}% _{source}_")
         
         st.markdown("---")
         
-        # Nutritional Information
         if nutrition_data:
             nutrients = nutrition_data['nutrients']
             health_rating, emoji = analyzer.analyze_health(nutrients)
@@ -285,7 +329,6 @@ def main():
                 st.write(f"**Health Rating:** {emoji} {health_rating}")
             
             with col2:
-                # Health insight card
                 if health_rating == "Healthy":
                     st.success("✅ Healthy Choice!")
                 elif health_rating == "Moderate":
@@ -295,19 +338,12 @@ def main():
             
             st.markdown("**Key Nutrients (per 100g):**")
             
-            # Priority nutrients
             priority = [
-                'Energy',
-                'Protein',
-                'Total lipid (fat)',
-                'Carbohydrate, by difference',
-                'Fiber, total dietary',
-                'Sugars, total including NLEA',
-                'Sodium, Na',
-                'Cholesterol'
+                'Energy', 'Protein', 'Total lipid (fat)',
+                'Carbohydrate, by difference', 'Fiber, total dietary',
+                'Sugars, total including NLEA', 'Sodium, Na', 'Cholesterol'
             ]
             
-            # Display nutrients in a nice table
             nutrient_data = []
             displayed = set()
             
@@ -316,13 +352,11 @@ def main():
                     nutrient_data.append([nutrient, nutrients[nutrient]])
                     displayed.add(nutrient)
             
-            # Add remaining nutrients (up to 15 total)
             for nutrient, value in nutrients.items():
                 if nutrient not in displayed and len(displayed) < 15:
                     nutrient_data.append([nutrient, value])
                     displayed.add(nutrient)
             
-            # Create two columns for nutrients
             if nutrient_data:
                 col1, col2 = st.columns(2)
                 mid = len(nutrient_data) // 2
@@ -335,47 +369,40 @@ def main():
                     for nutrient, value in nutrient_data[mid:]:
                         st.write(f"• **{nutrient}:** {value}")
             
-            # Health Insights
             st.markdown("---")
             st.subheader("💡 Health Insights")
             
             if health_rating == "Healthy":
-                st.markdown("""
-                ✅ **This food appears to be a healthy choice!** It contains beneficial nutrients 
-                that contribute to a balanced diet.
-                """)
+                st.markdown("✅ **This food appears to be a healthy choice!** It contains beneficial nutrients that contribute to a balanced diet.")
             elif health_rating == "Moderate":
-                st.markdown("""
-                ⚠️ **This food is okay in moderation.** Be mindful of portion sizes and 
-                try to balance it with other nutritious foods throughout the day.
-                """)
+                st.markdown("⚠️ **This food is okay in moderation.** Be mindful of portion sizes and try to balance it with other nutritious foods.")
             else:
-                st.markdown("""
-                ⚠️ **This food may be high in fats, sugars, or sodium.** Consider consuming 
-                it occasionally and in small portions as part of a balanced diet.
-                """)
+                st.markdown("⚠️ **This food may be high in fats, sugars, or sodium.** Consider consuming it occasionally and in small portions.")
         else:
-            st.info("ℹ️ Nutritional information not available for this food item. The AI identified it as '" + 
-                   top_food + "', but we couldn't find matching nutritional data in the USDA database.")
+            st.info(f"ℹ️ Nutritional information not available for '{top_food}' in the USDA database. Try searching for a similar food name.")
     
     else:
-        # Show example when no image is uploaded
         st.info("👆 Upload an image to get started!")
         
-        # Optional: Show example images if you have them
-        st.markdown("### 📸 How it works:")
-        st.markdown("""
-        1. Upload a clear photo of food
-        2. AI analyzes the image using Vision Transformer trained on Food-101
-        3. Get nutritional information from USDA database
-        4. Receive a health rating and insights
-        """)
-        
-        st.markdown("### 🍕 Recognizable Foods (101 categories):")
-        st.markdown("""
-        The AI can recognize common foods including: apple pie, pizza, hamburger, 
-        sushi, ice cream, french fries, chocolate cake, salad, steak, and many more!
-        """)
+        st.markdown("### 📸 Best Results For:")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("""
+            **Individual Ingredients:**
+            - 🍎 Fruits (apple, banana, orange, pear)
+            - 🥕 Vegetables (carrot, broccoli, tomato)
+            - 🍄 Mushrooms
+            - 🌽 Corn, peppers
+            """)
+        with col2:
+            st.markdown("""
+            **Prepared Dishes:**
+            - 🍕 Pizza
+            - 🍔 Hamburger
+            - 🍣 Sushi
+            - 🥗 Salad
+            - 🍰 Desserts
+            """)
 
 if __name__ == "__main__":
     main()
