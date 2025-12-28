@@ -1,13 +1,17 @@
 """
 Food Health Analyzer
-AI-powered food recognition with nutritional analysis
+A web application that analyzes food images and provides nutritional information
 """
 
 import streamlit as st
+import tensorflow as tf
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
+import numpy as np
+from PIL import Image
 import requests
 import os
-from PIL import Image
-import io
 
 # Page configuration
 st.set_page_config(
@@ -20,254 +24,162 @@ st.set_page_config(
 USDA_API_KEY = os.environ.get('USDA_API_KEY', 'DEMO_KEY')
 USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
 
-# Hugging Face Inference API
-HF_API_TOKEN = os.environ.get('HF_TOKEN', None)
-HF_API_URL = "https://api-inference.huggingface.co/models/nateraw/food"
-
-def image_to_bytes(image):
-    """Convert PIL Image to bytes"""
-    buffered = io.BytesIO()
-    image.save(buffered, format="JPEG")
-    return buffered.getvalue()
-
-def predict_food_hf_api(image):
-    """Use HF Inference API for food classification"""
-    try:
-        headers = {}
-        if HF_API_TOKEN:
-            headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
+class FoodHealthAnalyzer:
+    def __init__(self):
+        """Initialize the food analyzer with ResNet50 model"""
+        self.img_size = (224, 224)
+        self.model = self.build_model()
         
-        img_bytes = image_to_bytes(image)
-        
-        response = requests.post(
-            HF_API_URL,
-            headers=headers,
-            data=img_bytes,
-            timeout=30
+    @st.cache_resource
+    def build_model(_self):
+        """Build model using ResNet50 with ImageNet weights"""
+        base_model = ResNet50(
+            weights='imagenet',
+            include_top=True,
+            input_shape=(224, 224, 3)
         )
+        return base_model
+    
+    def preprocess_image(self, img):
+        """Preprocess image for model input"""
+        # Resize image
+        img = img.resize(self.img_size)
+        img_array = image.img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array = preprocess_input(img_array)
+        return img_array
+    
+    def predict_food(self, img, top_k=5):
+        """Predict food item from image"""
+        img_array = self.preprocess_image(img)
+        predictions = self.model.predict(img_array, verbose=0)
+        decoded = decode_predictions(predictions, top=top_k)[0]
         
-        # Debug: Show what we got back
-        st.write(f"Primary API Status: {response.status_code}")
+        results = []
+        for _, label, confidence in decoded:
+            results.append({
+                'name': label,
+                'confidence': float(confidence)
+            })
         
-        if response.status_code == 200:
-            results = response.json()
+        return results
+    
+    def get_usda_nutrition(self, food_name):
+        """Get nutrition information from USDA API"""
+        try:
+            params = {
+                'api_key': USDA_API_KEY,
+                'query': food_name,
+                'dataType': ['Foundation', 'SR Legacy'],
+                'pageSize': 1
+            }
             
-            # Check if results is an error dict
-            if isinstance(results, dict) and 'error' in results:
-                st.warning(f"Model error: {results['error']}")
-                if 'estimated_time' in results:
-                    st.info(f"Model is loading, estimated time: {results['estimated_time']}s. Using fallback...")
-                return predict_food_fallback(image)
+            response = requests.get(USDA_SEARCH_URL, params=params, timeout=10)
             
-            # Process valid results
-            predictions = []
-            for item in results[:5]:
-                predictions.append({
-                    'name': item['label'],
-                    'confidence': item['score']
-                })
-            return predictions
-        else:
-            st.warning(f"Primary model returned status {response.status_code}, trying fallback...")
-            return predict_food_fallback(image)
+            if response.status_code != 200:
+                return None
             
-    except Exception as e:
-        st.warning(f"Primary model error: {str(e)}, using fallback...")
-        return predict_food_fallback(image)
-
-def predict_food_fallback(image):
-    """Fallback using alternative food model"""
-    try:
-        alt_url = "https://api-inference.huggingface.co/models/Kaludi/food-category-classification-v2.0"
-        
-        headers = {}
-        if HF_API_TOKEN:
-            headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
-        
-        img_bytes = image_to_bytes(image)
-        
-        response = requests.post(
-            alt_url,
-            headers=headers,
-            data=img_bytes,
-            timeout=30
-        )
-        
-        st.write(f"Fallback API Status: {response.status_code}")
-        
-        if response.status_code == 200:
-            results = response.json()
+            data = response.json()
             
-            # Check if results is an error dict
-            if isinstance(results, dict) and 'error' in results:
-                st.warning(f"Fallback model error: {results['error']}")
-                if 'estimated_time' in results:
-                    st.info(f"Fallback model is loading, estimated time: {results['estimated_time']}s. Using general model...")
-                return predict_food_general(image)
+            if not data.get('foods') or len(data['foods']) == 0:
+                return None
             
-            predictions = []
-            for item in results[:5]:
-                predictions.append({
-                    'name': item['label'],
-                    'confidence': item['score']
-                })
-            return predictions
-        else:
-            st.warning(f"Fallback model returned status {response.status_code}, trying general model...")
-            return predict_food_general(image)
+            food = data['foods'][0]
+            nutrients = {}
             
-    except Exception as e:
-        st.warning(f"Fallback model error: {str(e)}, using general model...")
-        return predict_food_general(image)
-
-def predict_food_general(image):
-    """Use general image classification as last resort"""
-    try:
-        general_url = "https://api-inference.huggingface.co/models/microsoft/resnet-50"
-        
-        headers = {}
-        if HF_API_TOKEN:
-            headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
-        
-        img_bytes = image_to_bytes(image)
-        
-        response = requests.post(
-            general_url,
-            headers=headers,
-            data=img_bytes,
-            timeout=30
-        )
-        
-        st.write(f"General API Status: {response.status_code}")
-        
-        if response.status_code == 200:
-            results = response.json()
+            # Extract key nutrients
+            for nutrient in food.get('foodNutrients', []):
+                name = nutrient.get('nutrientName', '')
+                value = nutrient.get('value', 0)
+                unit = nutrient.get('unitName', '')
+                
+                if name and value:
+                    nutrients[name] = f"{value} {unit}"
             
-            # Check if results is an error dict
-            if isinstance(results, dict) and 'error' in results:
-                st.error(f"All models unavailable: {results['error']}")
-                if 'estimated_time' in results:
-                    st.info(f"Model is loading. Please wait {results['estimated_time']}s and try again.")
-                return [{'name': 'Model loading - please try again in a moment', 'confidence': 0.0}]
+            return {
+                'name': food.get('description', food_name),
+                'nutrients': nutrients
+            }
             
-            predictions = []
-            for item in results[:5]:
-                predictions.append({
-                    'name': item['label'],
-                    'confidence': item['score']
-                })
-            return predictions
-        else:
-            st.error(f"All models returned errors. Status: {response.status_code}")
-            st.info("The models may be loading. Please wait 30 seconds and try again.")
-            return [{'name': 'Models loading - please retry', 'confidence': 0.0}]
-            
-    except Exception as e:
-        st.error(f"Error accessing classification models: {str(e)}")
-        return [{'name': 'Classification error', 'confidence': 0.0}]
-
-def get_usda_nutrition(food_name):
-    """Get nutrition information from USDA API"""
-    try:
-        params = {
-            'api_key': USDA_API_KEY,
-            'query': food_name,
-            'dataType': ['Foundation', 'SR Legacy'],
-            'pageSize': 1
+        except Exception as e:
+            print(f"Error fetching nutrition data: {e}")
+            return None
+    
+    def analyze_health(self, nutrients):
+        """Analyze health rating based on nutrients"""
+        if not nutrients:
+            return "Unknown", "⚪"
+        
+        # Simple health scoring logic
+        health_score = 0
+        max_score = 0
+        
+        # Positive nutrients
+        positive_nutrients = {
+            'Protein': 2,
+            'Fiber, total dietary': 2,
+            'Vitamin C, total ascorbic acid': 1,
+            'Vitamin A, IU': 1,
+            'Calcium, Ca': 1,
+            'Iron, Fe': 1
         }
         
-        response = requests.get(USDA_SEARCH_URL, params=params, timeout=10)
-        
-        if response.status_code != 200:
-            return None
-        
-        data = response.json()
-        
-        if not data.get('foods') or len(data['foods']) == 0:
-            return None
-        
-        food = data['foods'][0]
-        nutrients = {}
-        
-        for nutrient in food.get('foodNutrients', []):
-            name = nutrient.get('nutrientName', '')
-            value = nutrient.get('value', 0)
-            unit = nutrient.get('unitName', '')
-            
-            if name and value:
-                nutrients[name] = f"{value} {unit}"
-        
-        return {
-            'name': food.get('description', food_name),
-            'nutrients': nutrients
+        # Negative nutrients
+        negative_nutrients = {
+            'Total lipid (fat)': -2,
+            'Fatty acids, total saturated': -2,
+            'Sugars, total including NLEA': -2,
+            'Sodium, Na': -2,
+            'Cholesterol': -1
         }
         
-    except Exception as e:
-        return None
+        for nutrient, weight in positive_nutrients.items():
+            max_score += abs(weight)
+            if nutrient in nutrients:
+                try:
+                    value = float(nutrients[nutrient].split()[0])
+                    if value > 5:  # Significant amount
+                        health_score += weight
+                except:
+                    pass
+        
+        for nutrient, weight in negative_nutrients.items():
+            max_score += abs(weight)
+            if nutrient in nutrients:
+                try:
+                    value = float(nutrients[nutrient].split()[0])
+                    # Thresholds for "high" amounts (per 100g)
+                    thresholds = {
+                        'Total lipid (fat)': 20,
+                        'Fatty acids, total saturated': 5,
+                        'Sugars, total including NLEA': 10,
+                        'Sodium, Na': 500,
+                        'Cholesterol': 100
+                    }
+                    if value > thresholds.get(nutrient, 10):
+                        health_score += weight
+                except:
+                    pass
+        
+        # Calculate rating
+        if max_score == 0:
+            return "Unknown", "⚪"
+        
+        score_ratio = health_score / max_score
+        
+        if score_ratio > 0.3:
+            return "Healthy", "🟢"
+        elif score_ratio > -0.3:
+            return "Moderate", "🟡"
+        else:
+            return "Unhealthy", "🔴"
 
-def analyze_health(nutrients):
-    """Analyze health rating based on nutrients"""
-    if not nutrients:
-        return "Unknown", "⚪"
-    
-    health_score = 0
-    max_score = 0
-    
-    positive_nutrients = {
-        'Protein': 2,
-        'Fiber, total dietary': 2,
-        'Vitamin C, total ascorbic acid': 1,
-        'Vitamin A, IU': 1,
-        'Calcium, Ca': 1,
-        'Iron, Fe': 1
-    }
-    
-    negative_nutrients = {
-        'Total lipid (fat)': -2,
-        'Fatty acids, total saturated': -2,
-        'Sugars, total including NLEA': -2,
-        'Sodium, Na': -2,
-        'Cholesterol': -1
-    }
-    
-    for nutrient, weight in positive_nutrients.items():
-        max_score += abs(weight)
-        if nutrient in nutrients:
-            try:
-                value = float(nutrients[nutrient].split()[0])
-                if value > 5:
-                    health_score += weight
-            except:
-                pass
-    
-    for nutrient, weight in negative_nutrients.items():
-        max_score += abs(weight)
-        if nutrient in nutrients:
-            try:
-                value = float(nutrients[nutrient].split()[0])
-                thresholds = {
-                    'Total lipid (fat)': 20,
-                    'Fatty acids, total saturated': 5,
-                    'Sugars, total including NLEA': 10,
-                    'Sodium, Na': 500,
-                    'Cholesterol': 100
-                }
-                if value > thresholds.get(nutrient, 10):
-                    health_score += weight
-            except:
-                pass
-    
-    if max_score == 0:
-        return "Unknown", "⚪"
-    
-    score_ratio = health_score / max_score
-    
-    if score_ratio > 0.3:
-        return "Healthy", "🟢"
-    elif score_ratio > -0.3:
-        return "Moderate", "🟡"
-    else:
-        return "Unhealthy", "🔴"
+# Initialize analyzer (cached to avoid reloading model)
+@st.cache_resource
+def get_analyzer():
+    return FoodHealthAnalyzer()
+
+analyzer = get_analyzer()
 
 # Main app
 def main():
@@ -275,8 +187,8 @@ def main():
     st.markdown("""
     Upload a photo of food to identify it and get nutritional information!
     
-    **Features:**
-    - 🤖 AI-powered food recognition
+    **This app uses AI to recognize food items and provides:**
+    - 🍽️ Food identification with confidence scores
     - 📊 Nutritional information from USDA database
     - 💚 Health rating based on nutritional content
     """)
@@ -294,8 +206,8 @@ def main():
         st.markdown("---")
         st.markdown("### About")
         st.markdown("""
-        This app uses AI to recognize food items and provides nutritional analysis 
-        using data from the USDA FoodData Central database.
+        This app uses **ResNet50** trained on ImageNet to recognize food items 
+        and provides nutritional analysis using data from the **USDA FoodData Central** database.
         """)
     
     # File uploader
@@ -307,12 +219,12 @@ def main():
     
     if uploaded_file is not None:
         # Display the uploaded image
-        image = Image.open(uploaded_file)
+        img = Image.open(uploaded_file)
         
         col1, col2 = st.columns([1, 1])
         
         with col1:
-            st.image(image, caption="Uploaded Image", use_container_width=True)
+            st.image(img, caption="Uploaded Image", use_container_width=True)
         
         with col2:
             st.subheader("🔍 Analyzing...")
@@ -323,25 +235,27 @@ def main():
             
             try:
                 # Step 1: Predict food
-                status_text.text("Identifying food...")
+                status_text.text("🤖 Identifying food with AI...")
                 progress_bar.progress(33)
-                predictions = predict_food_hf_api(image)
+                predictions = analyzer.predict_food(img)
                 
                 # Step 2: Get nutrition
-                status_text.text("Fetching nutritional data...")
+                status_text.text("📊 Fetching nutritional data...")
                 progress_bar.progress(66)
                 top_food = predictions[0]['name'].replace('_', ' ')
-                nutrition_data = get_usda_nutrition(top_food)
+                nutrition_data = analyzer.get_usda_nutrition(top_food)
                 
-                # Step 3: Analyze health
-                status_text.text("Analyzing health rating...")
+                # Step 3: Complete
+                status_text.text("✅ Analysis complete!")
                 progress_bar.progress(100)
                 
-                # Clear progress indicators
+                # Clear progress indicators after a moment
+                import time
+                time.sleep(0.5)
                 status_text.empty()
                 progress_bar.empty()
                 
-                st.success("Analysis complete!")
+                st.success("Analysis complete! 🎉")
                 
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
@@ -361,7 +275,7 @@ def main():
         # Nutritional Information
         if nutrition_data:
             nutrients = nutrition_data['nutrients']
-            health_rating, emoji = analyze_health(nutrients)
+            health_rating, emoji = analyzer.analyze_health(nutrients)
             
             col1, col2 = st.columns([2, 1])
             
@@ -427,25 +341,35 @@ def main():
             
             if health_rating == "Healthy":
                 st.markdown("""
-                ✅ This food appears to be a healthy choice! It contains beneficial nutrients 
+                ✅ **This food appears to be a healthy choice!** It contains beneficial nutrients 
                 that contribute to a balanced diet.
                 """)
             elif health_rating == "Moderate":
                 st.markdown("""
-                ⚠️ This food is okay in moderation. Be mindful of portion sizes and 
+                ⚠️ **This food is okay in moderation.** Be mindful of portion sizes and 
                 try to balance it with other nutritious foods throughout the day.
                 """)
             else:
                 st.markdown("""
-                ⚠️ This food may be high in fats, sugars, or sodium. Consider consuming 
+                ⚠️ **This food may be high in fats, sugars, or sodium.** Consider consuming 
                 it occasionally and in small portions as part of a balanced diet.
                 """)
         else:
-            st.info("ℹ️ Nutritional information not available for this food item.")
+            st.info("ℹ️ Nutritional information not available for this food item. The AI identified it as '" + 
+                   top_food + "', but we couldn't find matching nutritional data in the USDA database.")
     
     else:
         # Show example when no image is uploaded
         st.info("👆 Upload an image to get started!")
+        
+        # Optional: Show example images if you have them
+        st.markdown("### 📸 How it works:")
+        st.markdown("""
+        1. Upload a clear photo of food
+        2. AI analyzes the image using ResNet50
+        3. Get nutritional information from USDA database
+        4. Receive a health rating and insights
+        """)
 
 if __name__ == "__main__":
     main()
