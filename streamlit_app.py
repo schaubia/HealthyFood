@@ -127,10 +127,15 @@ class HybridFoodAnalyzer:
             # Search for recipe
             search_query = f"{food_name} recipe main ingredients"
             
+            st.write(f"🔍 Searching for: {search_query}")  # Debug
+            
             with DDGS() as ddgs:
-                results = list(ddgs.text(search_query, max_results=3))
+                results = list(ddgs.text(search_query, max_results=5))
+            
+            st.write(f"📝 Found {len(results)} search results")  # Debug
             
             if not results:
+                st.warning("No search results found")
                 return None
             
             # Extract ingredients from search results
@@ -140,6 +145,8 @@ class HybridFoodAnalyzer:
                 title = result.get('title', '')
                 ingredients_text += f"{title} {snippet} "
             
+            st.write(f"📄 Extracted text length: {len(ingredients_text)} characters")  # Debug
+            
             # Common food ingredients to look for
             common_ingredients = [
                 'egg', 'eggs', 'milk', 'cheese', 'butter', 'oil', 'olive oil',
@@ -148,7 +155,9 @@ class HybridFoodAnalyzer:
                 'fish', 'shrimp', 'potato', 'carrot', 'cream', 'yogurt',
                 'lemon', 'lime', 'herbs', 'spices', 'basil', 'oregano',
                 'parmesan', 'mozzarella', 'cheddar', 'bacon', 'ham',
-                'mushroom', 'spinach', 'broccoli', 'lettuce', 'cucumber'
+                'mushroom', 'spinach', 'broccoli', 'lettuce', 'cucumber',
+                'ricotta', 'meat', 'ground beef', 'sausage', 'marinara',
+                'sauce', 'parsley', 'thyme', 'rosemary'
             ]
             
             # Find mentioned ingredients
@@ -156,22 +165,35 @@ class HybridFoodAnalyzer:
             ingredients_lower = ingredients_text.lower()
             
             for ingredient in common_ingredients:
-                if ingredient in ingredients_lower and ingredient not in found_ingredients:
-                    found_ingredients.append(ingredient)
+                if ingredient in ingredients_lower:
+                    # Avoid duplicates (e.g., 'egg' and 'eggs')
+                    if ingredient == 'eggs' and 'egg' in found_ingredients:
+                        continue
+                    if ingredient == 'egg' and 'eggs' in found_ingredients:
+                        continue
+                    
+                    if ingredient not in found_ingredients:
+                        found_ingredients.append(ingredient)
             
-            # Limit to top 10 most commonly found
-            found_ingredients = found_ingredients[:10]
+            st.write(f"✅ Found {len(found_ingredients)} ingredients: {found_ingredients[:5]}")  # Debug
+            
+            # Limit to top 15 most commonly found
+            found_ingredients = found_ingredients[:15]
             
             if found_ingredients:
                 return {
                     'ingredients': found_ingredients,
                     'source': results[0].get('href', 'web search')
                 }
+            else:
+                st.warning("No common ingredients detected in search results")
             
             return None
             
         except Exception as e:
-            print(f"Error scraping ingredients: {e}")
+            st.error(f"Error scraping ingredients: {str(e)}")
+            import traceback
+            st.code(traceback.format_exc())
             return None
     
     def analyze_ingredients_health(self, ingredients):
