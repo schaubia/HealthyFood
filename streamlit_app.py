@@ -24,7 +24,6 @@ USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
 HF_API_TOKEN = os.environ.get('HF_TOKEN', None)
 HF_API_URL = "https://api-inference.huggingface.co/models/nateraw/food"
 
-@st.cache_data
 def image_to_bytes(image):
     """Convert PIL Image to bytes"""
     buffered = io.BytesIO()
