@@ -1,6 +1,5 @@
 streamlit
-tensorflow-cpu
+transformers
+torch
 pillow
 requests
-numpy
-
