@@ -1,6 +1,7 @@
 """
-Food Health Analyzer - Hybrid Version
+Food Health Analyzer - Enhanced with Learning
 Uses both Food-101 (for dishes) and ResNet50 (for ingredients/fruits)
+WITH USER FEEDBACK AND LEARNING MECHANISM
 """
 
 import streamlit as st
@@ -14,6 +15,9 @@ from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
 import numpy as np
+import json
+from datetime import datetime
+import pickle
 
 # Page configuration
 st.set_page_config(
@@ -26,12 +30,17 @@ st.set_page_config(
 USDA_API_KEY = os.environ.get('USDA_API_KEY', 'DEMO_KEY')
 USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
 
+# Learning configuration
+FEEDBACK_FILE = "food_feedback.json"
+USER_CORRECTIONS_FILE = "user_corrections.pkl"
+
 class HybridFoodAnalyzer:
     def __init__(self):
         """Initialize with both models for better coverage"""
         self.vit_extractor, self.vit_model = self.build_vit_model()
         self.resnet_model = self.build_resnet_model()
         self.img_size = (224, 224)
+        self.load_user_corrections()
         
     @st.cache_resource
     def build_vit_model(_self):
@@ -45,6 +54,71 @@ class HybridFoodAnalyzer:
     def build_resnet_model(_self):
         """Build ResNet50 for ingredients and fruits"""
         return ResNet50(weights='imagenet', include_top=True, input_shape=(224, 224, 3))
+    
+    def load_user_corrections(self):
+        """Load user corrections from previous sessions"""
+        if os.path.exists(USER_CORRECTIONS_FILE):
+            with open(USER_CORRECTIONS_FILE, 'rb') as f:
+                self.user_corrections = pickle.load(f)
+        else:
+            self.user_corrections = []
+        
+        # Also load feedback log
+        if os.path.exists(FEEDBACK_FILE):
+            with open(FEEDBACK_FILE, 'r') as f:
+                self.feedback_log = json.load(f)
+        else:
+            self.feedback_log = []
+    
+    def save_user_corrections(self):
+        """Save user corrections for future learning"""
+        with open(USER_CORRECTIONS_FILE, 'wb') as f:
+            pickle.dump(self.user_corrections, f)
+        
+        with open(FEEDBACK_FILE, 'w') as f:
+            json.dump(self.feedback_log, f, indent=2)
+    
+    def extract_image_features(self, img):
+        """Extract features from image for similarity matching"""
+        # Resize and convert to array
+        img_resized = img.resize(self.img_size)
+        img_array = image.img_to_array(img_resized)
+        
+        # Extract basic features
+        avg_colors = img_array.mean(axis=(0, 1))
+        color_variance = img_array.std(axis=(0, 1))
+        brightness = img_array.mean()
+        
+        # Combine features
+        features = np.concatenate([avg_colors, color_variance, [brightness]])
+        return features
+    
+    def check_user_corrections(self, img, features):
+        """Check if similar images were corrected by user"""
+        if not self.user_corrections:
+            return None
+        
+        # Find similar corrections
+        similarities = []
+        for correction in self.user_corrections:
+            if 'features' in correction:
+                saved_features = np.array(correction['features'])
+                distance = np.linalg.norm(features - saved_features)
+                similarity = 1 / (1 + distance)
+                
+                if similarity > 0.85:  # High similarity threshold
+                    similarities.append({
+                        'food': correction['correct_food'],
+                        'similarity': similarity,
+                        'count': correction.get('count', 1)
+                    })
+        
+        if similarities:
+            # Sort by similarity and count
+            similarities.sort(key=lambda x: (x['similarity'], x['count']), reverse=True)
+            return similarities[0]
+        
+        return None
     
     def predict_with_vit(self, img):
         """Predict using ViT Food-101 model"""
@@ -90,7 +164,23 @@ class HybridFoodAnalyzer:
         return results
     
     def predict_food(self, img):
-        """Smart prediction using both models"""
+        """Smart prediction using both models and user corrections"""
+        # Extract features for similarity matching
+        features = self.extract_image_features(img)
+        
+        # Check user corrections first
+        user_match = self.check_user_corrections(img, features)
+        
+        if user_match:
+            # User has corrected similar images before
+            st.info(f"🧠 Found similar correction from learning: {user_match['food']} (similarity: {user_match['similarity']:.1%})")
+            return [{
+                'name': user_match['food'],
+                'confidence': 0.95,
+                'source': 'User Learning',
+                'features': features.tolist()
+            }]
+        
         # Try Food-101 first
         vit_results = self.predict_with_vit(img)
         
@@ -108,15 +198,75 @@ class HybridFoodAnalyzer:
             if any(keyword in r['name'].lower() for keyword in food_keywords)
         ]
         
+        # Add features to results
+        for result in vit_results:
+            result['features'] = features.tolist()
+        
         # Combine results intelligently
-        # If top VIT result has low confidence (<0.3), prefer ResNet for simple foods
         if vit_results[0]['confidence'] < 0.3 and food_resnet_results:
-            # Use ResNet if it found food items
             if food_resnet_results[0]['confidence'] > 0.5:
+                for result in food_resnet_results:
+                    result['features'] = features.tolist()
                 return food_resnet_results[:5]
         
-        # Otherwise return VIT results
         return vit_results
+    
+    def add_user_correction(self, predicted_food, correct_food, features, confidence):
+        """Add user correction to learning database"""
+        # Check if this exact food already exists in corrections
+        existing = None
+        for i, correction in enumerate(self.user_corrections):
+            if correction['correct_food'].lower() == correct_food.lower():
+                # Check if features are similar
+                saved_features = np.array(correction['features'])
+                distance = np.linalg.norm(np.array(features) - saved_features)
+                if distance < 50:  # Similar enough
+                    existing = i
+                    break
+        
+        if existing is not None:
+            # Update existing correction
+            self.user_corrections[existing]['count'] = self.user_corrections[existing].get('count', 1) + 1
+            self.user_corrections[existing]['last_updated'] = datetime.now().isoformat()
+        else:
+            # Add new correction
+            self.user_corrections.append({
+                'predicted_food': predicted_food,
+                'correct_food': correct_food,
+                'features': features,
+                'confidence': confidence,
+                'timestamp': datetime.now().isoformat(),
+                'count': 1
+            })
+        
+        # Add to feedback log
+        self.feedback_log.append({
+            'timestamp': datetime.now().isoformat(),
+            'predicted': predicted_food,
+            'correct': correct_food,
+            'was_correct': predicted_food.lower() == correct_food.lower()
+        })
+        
+        self.save_user_corrections()
+    
+    def get_learning_stats(self):
+        """Get statistics about learning progress"""
+        total_corrections = len(self.feedback_log)
+        correct_predictions = sum(1 for log in self.feedback_log if log['was_correct'])
+        
+        if total_corrections > 0:
+            accuracy = (correct_predictions / total_corrections) * 100
+        else:
+            accuracy = 0
+        
+        unique_foods = len(self.user_corrections)
+        
+        return {
+            'total_feedback': total_corrections,
+            'correct_predictions': correct_predictions,
+            'accuracy': accuracy,
+            'unique_foods_learned': unique_foods
+        }
     
     def get_recipe_ingredients(self, food_name):
         """Get ingredients using Wikipedia API and fallback database"""
@@ -436,7 +586,7 @@ def get_analyzer():
 analyzer = get_analyzer()
 
 def main():
-    st.title("🍎 Food Health Analyzer")
+    st.title("🍎 Food Health Analyzer with Learning")
     st.markdown("""
     Upload a photo of food to identify it and get nutritional information!
     
@@ -444,9 +594,45 @@ def main():
     - 🍽️ Smart AI recognition (dishes + ingredients)
     - 📊 Nutritional information from USDA database
     - 💚 Health rating based on nutritional content
+    - 🧠 **NEW: Learns from your corrections!**
     """)
     
     with st.sidebar:
+        st.header("🧠 Learning Statistics")
+        
+        stats = analyzer.get_learning_stats()
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Total Feedback", stats['total_feedback'])
+            st.metric("Unique Foods", stats['unique_foods_learned'])
+        
+        with col2:
+            st.metric("Correct", stats['correct_predictions'])
+            if stats['total_feedback'] > 0:
+                st.metric("Accuracy", f"{stats['accuracy']:.1f}%")
+        
+        if stats['total_feedback'] > 0:
+            st.progress(stats['accuracy'] / 100, text=f"Learning Progress")
+        
+        st.markdown("---")
+        
+        if analyzer.user_corrections:
+            st.subheader("📚 Learned Foods")
+            for correction in analyzer.user_corrections[-5:]:
+                count = correction.get('count', 1)
+                st.write(f"✅ {correction['correct_food']} (×{count})")
+        
+        st.markdown("---")
+        
+        if st.button("🔄 Reset Learning Data", type="secondary"):
+            analyzer.user_corrections = []
+            analyzer.feedback_log = []
+            analyzer.save_user_corrections()
+            st.success("Learning data reset!")
+            st.rerun()
+        
+        st.markdown("---")
         st.header("📝 Tips for Best Results")
         st.markdown("""
         - Use clear, well-lit photos
@@ -463,6 +649,7 @@ def main():
         This app uses **hybrid AI**:
         - **Food-101 ViT** for prepared dishes
         - **ResNet50 ImageNet** for fruits, vegetables, and ingredients
+        - **User Learning** from your corrections
         
         Nutritional data from **USDA FoodData Central**.
         """)
@@ -520,11 +707,77 @@ def main():
         
         st.markdown("---")
         
+        # Prediction Results with Feedback
         st.subheader("🍽️ Food Recognition Results")
+        
+        # Store prediction in session state
+        if 'current_prediction' not in st.session_state:
+            st.session_state.current_prediction = None
+        
+        st.session_state.current_prediction = {
+            'food': top_food,
+            'predictions': predictions,
+            'features': predictions[0].get('features', [])
+        }
+        
+        # Show predictions
         for i, pred in enumerate(predictions, 1):
             confidence_pct = pred['confidence'] * 100
             source = pred.get('source', 'AI')
-            st.write(f"**{i}.** {pred['name'].replace('_', ' ').title()} - {confidence_pct:.2f}% _{source}_")
+            
+            if i == 1:
+                st.markdown(f"### **Top Prediction:** {pred['name'].replace('_', ' ').title()}")
+                st.progress(pred['confidence'], text=f"Confidence: {confidence_pct:.1f}% _{source}_")
+            else:
+                st.write(f"**{i}.** {pred['name'].replace('_', ' ').title()} - {confidence_pct:.2f}% _{source}_")
+        
+        # Feedback Section
+        st.markdown("---")
+        st.subheader("📝 Was this prediction correct?")
+        
+        feedback_col1, feedback_col2 = st.columns(2)
+        
+        with feedback_col1:
+            if st.button("✅ Yes, Correct!", type="primary", use_container_width=True):
+                analyzer.add_user_correction(
+                    top_food,
+                    top_food,
+                    st.session_state.current_prediction['features'],
+                    predictions[0]['confidence']
+                )
+                st.success("✅ Thanks! The model will remember this.")
+                st.balloons()
+                time.sleep(1)
+                st.rerun()
+        
+        with feedback_col2:
+            if st.button("❌ No, Wrong", type="secondary", use_container_width=True):
+                st.session_state.show_correction_form = True
+        
+        # Correction Form
+        if st.session_state.get('show_correction_form', False):
+            st.markdown("---")
+            st.subheader("🔧 Help the Model Learn")
+            
+            correct_food_name = st.text_input(
+                "What is the correct food name?",
+                placeholder="e.g., Caesar Salad, Grilled Chicken, Apple Pie",
+                help="Enter the actual name of the food in the image"
+            )
+            
+            if st.button("💾 Submit Correction", type="primary", disabled=not correct_food_name):
+                if correct_food_name:
+                    analyzer.add_user_correction(
+                        top_food,
+                        correct_food_name,
+                        st.session_state.current_prediction['features'],
+                        predictions[0]['confidence']
+                    )
+                    st.success(f"✅ Thank you! The model learned that this is **{correct_food_name}**")
+                    st.info("🧠 Next time you upload a similar image, the model will recognize it!")
+                    st.session_state.show_correction_form = False
+                    time.sleep(2)
+                    st.rerun()
         
         st.markdown("---")
         
@@ -666,6 +919,17 @@ def main():
             - 🥗 Salad
             - 🍰 Desserts
             """)
+        
+        st.markdown("---")
+        st.markdown("### 🧠 How Learning Works")
+        st.markdown("""
+        1. **Upload** a food image and get AI predictions
+        2. **Confirm** if correct, or provide the **correct name**
+        3. **The model learns** and will recognize similar foods better next time
+        4. **Track progress** in the sidebar statistics
+        
+        The more you use it, the smarter it gets! 🚀
+        """)
 
 if __name__ == "__main__":
     main()
