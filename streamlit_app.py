@@ -371,6 +371,168 @@ class HybridFoodAnalyzer:
             'unique_foods_learned': unique_foods
         }
     
+    def get_ingredients_from_database(self, food_name):
+        """Built-in ingredient database for common dishes"""
+        food_lower = food_name.lower().strip()
+        
+        # Common dishes with known ingredients
+        ingredient_db = {
+            # Breakfast
+            'omelette': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
+            'omelet': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
+            'scrambled eggs': ['eggs', 'butter', 'milk', 'salt', 'pepper'],
+            'fried egg': ['eggs', 'oil', 'salt', 'pepper'],
+            'pancake': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
+            'waffle': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
+            'french toast': ['bread', 'eggs', 'milk', 'sugar', 'cinnamon', 'butter'],
+            
+            # Italian
+            'pizza': ['flour', 'yeast', 'tomato', 'mozzarella', 'olive oil', 'basil'],
+            'pasta': ['wheat', 'flour', 'eggs', 'salt', 'water'],
+            'spaghetti': ['pasta', 'tomato', 'garlic', 'olive oil', 'basil'],
+            'lasagna': ['pasta', 'beef', 'tomato', 'ricotta', 'mozzarella', 'parmesan'],
+            'ravioli': ['pasta', 'ricotta', 'cheese', 'eggs', 'spinach', 'flour'],
+            'risotto': ['rice', 'butter', 'parmesan', 'onion', 'chicken broth', 'white wine'],
+            'carbonara': ['pasta', 'eggs', 'bacon', 'parmesan', 'pepper', 'salt'],
+            
+            # American
+            'hamburger': ['beef', 'bread', 'lettuce', 'tomato', 'onion', 'cheese', 'pickles'],
+            'cheeseburger': ['beef', 'bread', 'cheese', 'lettuce', 'tomato', 'onion'],
+            'hot dog': ['sausage', 'bread', 'mustard', 'ketchup', 'onion'],
+            'sandwich': ['bread', 'meat', 'cheese', 'lettuce', 'tomato', 'mayo'],
+            'french fries': ['potato', 'oil', 'salt'],
+            'mashed potato': ['potato', 'butter', 'milk', 'salt', 'pepper'],
+            
+            # Asian
+            'sushi': ['rice', 'fish', 'seaweed', 'vinegar', 'soy sauce', 'wasabi'],
+            'ramen': ['noodles', 'broth', 'egg', 'pork', 'onion', 'soy sauce'],
+            'fried rice': ['rice', 'eggs', 'soy sauce', 'vegetables', 'oil', 'garlic'],
+            'pad thai': ['rice noodles', 'shrimp', 'eggs', 'peanuts', 'lime', 'fish sauce'],
+            'spring roll': ['rice paper', 'shrimp', 'vegetables', 'noodles', 'herbs'],
+            
+            # Mexican
+            'tacos': ['tortilla', 'beef', 'lettuce', 'cheese', 'tomato', 'salsa'],
+            'burrito': ['tortilla', 'rice', 'beans', 'meat', 'cheese', 'salsa'],
+            'quesadilla': ['tortilla', 'cheese', 'chicken', 'peppers', 'onion'],
+            'nachos': ['tortilla chips', 'cheese', 'beans', 'salsa', 'sour cream', 'jalapeño'],
+            
+            # Desserts
+            'cake': ['flour', 'sugar', 'eggs', 'butter', 'milk', 'baking powder'],
+            'chocolate cake': ['flour', 'sugar', 'eggs', 'butter', 'cocoa', 'milk'],
+            'cheesecake': ['cream cheese', 'sugar', 'eggs', 'graham crackers', 'butter'],
+            'ice cream': ['milk', 'cream', 'sugar', 'vanilla', 'eggs'],
+            'cookie': ['flour', 'sugar', 'butter', 'eggs', 'chocolate chips'],
+            'brownie': ['chocolate', 'butter', 'sugar', 'eggs', 'flour'],
+            'donut': ['flour', 'sugar', 'eggs', 'milk', 'butter', 'yeast'],
+            'creme brulee': ['cream', 'eggs', 'sugar', 'vanilla'],
+            'tiramisu': ['mascarpone', 'eggs', 'coffee', 'sugar', 'ladyfingers', 'cocoa'],
+            'apple pie': ['apples', 'flour', 'sugar', 'butter', 'cinnamon'],
+            
+            # Salads
+            'caesar salad': ['lettuce', 'parmesan', 'croutons', 'caesar dressing', 'chicken'],
+            'greek salad': ['lettuce', 'tomato', 'cucumber', 'feta', 'olives', 'olive oil'],
+            'salad': ['lettuce', 'tomato', 'cucumber', 'onion', 'olive oil', 'vinegar'],
+            
+            # Soups
+            'chicken soup': ['chicken', 'broth', 'carrot', 'celery', 'onion', 'noodles'],
+            'tomato soup': ['tomato', 'cream', 'onion', 'garlic', 'basil', 'butter'],
+            'minestrone': ['pasta', 'beans', 'tomato', 'carrot', 'celery', 'onion'],
+            
+            # Meat dishes
+            'steak': ['beef', 'salt', 'pepper', 'butter', 'garlic'],
+            'chicken breast': ['chicken', 'salt', 'pepper', 'oil', 'herbs'],
+            'pork chop': ['pork', 'salt', 'pepper', 'oil', 'garlic'],
+            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter'],
+            
+            # More breakfast
+            'croissant': ['flour', 'butter', 'yeast', 'sugar', 'milk', 'eggs'],
+            'bagel': ['flour', 'yeast', 'salt', 'sugar', 'water'],
+            'muffin': ['flour', 'sugar', 'eggs', 'milk', 'butter', 'baking powder']
+        }
+        
+        # Try exact match
+        if food_lower in ingredient_db:
+            return ingredient_db[food_lower]
+        
+        # Try partial match
+        for dish_name, ingredients in ingredient_db.items():
+            if dish_name in food_lower or food_lower in dish_name:
+                return ingredients
+        
+        return None
+    
+    def get_recipe_ingredients(self, food_name):
+        """Get ingredients using Wikipedia API and fallback database"""
+        
+        # First, try predefined database for common dishes
+        ingredients = self.get_ingredients_from_database(food_name)
+        if ingredients:
+            return {
+                'ingredients': ingredients,
+                'source': 'Built-in Database'
+            }
+        
+        # If not in database, try Wikipedia
+        try:
+            import wikipediaapi
+            
+            # Proper user agent as required by Wikipedia
+            wiki = wikipediaapi.Wikipedia(
+                user_agent='FoodHealthAnalyzer/1.0 (Educational App)',
+                language='en'
+            )
+            
+            # Search for the food page
+            page = wiki.page(food_name)
+            
+            if not page.exists():
+                # Try with "cuisine" or "food" suffix
+                page = wiki.page(f"{food_name} (food)")
+            
+            if not page.exists():
+                return None
+            
+            # Get page text
+            text = page.text.lower()
+            
+            # Common food ingredients to look for
+            common_ingredients = [
+                'egg', 'eggs', 'milk', 'cheese', 'butter', 'oil', 'olive oil',
+                'flour', 'wheat', 'rice', 'pasta', 'bread', 'sugar', 'salt',
+                'pepper', 'onion', 'garlic', 'tomato', 'chicken', 'beef', 'pork',
+                'fish', 'shrimp', 'potato', 'carrot', 'cream', 'yogurt',
+                'lemon', 'lime', 'herbs', 'spices', 'basil', 'oregano',
+                'parmesan', 'mozzarella', 'cheddar', 'bacon', 'ham',
+                'mushroom', 'spinach', 'broccoli', 'lettuce', 'cucumber',
+                'ricotta', 'meat', 'ground beef', 'sausage', 'marinara',
+                'sauce', 'parsley', 'thyme', 'rosemary', 'vanilla', 'chocolate'
+            ]
+            
+            # Find mentioned ingredients
+            found_ingredients = []
+            
+            for ingredient in common_ingredients:
+                if ingredient in text:
+                    # Avoid duplicates
+                    if ingredient == 'eggs' and 'egg' in found_ingredients:
+                        continue
+                    if ingredient == 'egg' and 'eggs' in found_ingredients:
+                        continue
+                    
+                    if ingredient not in found_ingredients:
+                        found_ingredients.append(ingredient)
+            
+            if found_ingredients:
+                return {
+                    'ingredients': found_ingredients[:15],
+                    'source': 'Wikipedia'
+                }
+            else:
+                return None
+            
+        except Exception as e:
+            return None
+    
     def get_food_from_usda(self, food_name, num_results=5):
         """Fetch food data from USDA API"""
         try:
@@ -714,14 +876,76 @@ def main():
         
         st.markdown("---")
         
+        # Try to get recipe ingredients from database or Wikipedia
+        with st.spinner("🔍 Looking for recipe ingredients..."):
+            recipe_data = analyzer.get_recipe_ingredients(top_food)
+        
+        if recipe_data:
+            st.subheader(f"🥘 Recipe Ingredients ({recipe_data['source']})")
+            
+            if recipe_data['source'] == 'Wikipedia':
+                st.info("✅ Found ingredients from Wikipedia article")
+            elif recipe_data['source'] == 'Built-in Database':
+                st.info("✅ Found ingredients from built-in recipe database")
+            
+            ingredients_list = recipe_data['ingredients']
+            healthy_ings, neutral_ings, unhealthy_ings = analyzer.analyze_ingredients_health_with_scores(ingredients_list)
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown("**🟢 Healthy (8-10)**")
+                if healthy_ings:
+                    for ing, score in healthy_ings:
+                        st.write(f"• {ing.title()} ({score}/10)")
+                else:
+                    st.write("_None identified_")
+            
+            with col2:
+                st.markdown("**🟡 Neutral (5-7)**")
+                if neutral_ings:
+                    for ing, score in neutral_ings:
+                        st.write(f"• {ing.title()} ({score}/10)")
+                else:
+                    st.write("_None identified_")
+            
+            with col3:
+                st.markdown("**🔴 Unhealthy (1-4)**")
+                if unhealthy_ings:
+                    for ing, score in unhealthy_ings:
+                        st.write(f"• {ing.title()} ({score}/10)")
+                else:
+                    st.write("_None identified_")
+            
+            # Overall ingredient score
+            if ingredients_list:
+                total_score = (
+                    sum(score for _, score in healthy_ings) +
+                    sum(score for _, score in neutral_ings) +
+                    sum(score for _, score in unhealthy_ings)
+                )
+                avg_score = total_score / len(ingredients_list)
+                
+                st.markdown(f"**Overall Recipe Score: {avg_score:.1f}/10**")
+                st.progress(avg_score / 10)
+                
+                if avg_score >= 7:
+                    st.success("💚 This dish contains mostly healthy ingredients!")
+                elif avg_score >= 5:
+                    st.info("ℹ️ This dish has a balanced mix of ingredients.")
+                else:
+                    st.warning("⚠️ This dish contains ingredients to consume in moderation.")
+            
+            st.markdown("---")
+        
         # Try to get USDA nutritional data
-        with st.spinner("🔍 Fetching nutritional data..."):
+        with st.spinner("🔍 Fetching USDA nutritional data..."):
             usda_data = analyzer.get_food_from_usda(top_food)
             nutrition_data = analyzer.extract_nutrition_info(usda_data)
             ingredients_data = analyzer.extract_ingredients(usda_data)
         
-        # Ingredients Section with Scores
-        if ingredients_data:
+        # USDA Ingredients Section (if different from recipe ingredients)
+        if ingredients_data and not recipe_data:
             st.subheader("🥘 Ingredient Analysis")
             
             ingredients_list = ingredients_data['ingredients']
