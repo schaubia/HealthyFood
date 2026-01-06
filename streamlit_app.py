@@ -1,7 +1,7 @@
 """
-Food Health Analyzer - Enhanced with Learning
+Food Health Analyzer - Enhanced with Learning and Point-Based Rating System
 Uses both Food-101 (for dishes) and ResNet50 (for ingredients/fruits)
-WITH USER FEEDBACK AND LEARNING MECHANISM
+WITH USER FEEDBACK, LEARNING MECHANISM, AND 1-10 HEALTH SCORING
 """
 
 import streamlit as st
@@ -18,6 +18,7 @@ import numpy as np
 import json
 from datetime import datetime
 import pickle
+import time
 
 # Page configuration
 st.set_page_config(
@@ -41,6 +42,55 @@ class HybridFoodAnalyzer:
         self.resnet_model = self.build_resnet_model()
         self.img_size = (224, 224)
         self.load_user_corrections()
+        
+        # Enhanced health categorization with point system (1-10)
+        self.health_scores = {
+            # Very Healthy Foods (8-10 points)
+            'vegetables': 9, 'broccoli': 10, 'spinach': 10, 'kale': 10, 'carrot': 9,
+            'tomato': 9, 'lettuce': 9, 'cucumber': 9, 'bell pepper': 9, 'zucchini': 9,
+            'cauliflower': 9, 'brussels sprouts': 9, 'asparagus': 9, 'celery': 9,
+            'fruits': 8, 'apple': 9, 'banana': 8, 'orange': 9, 'berries': 10,
+            'strawberry': 9, 'blueberry': 10, 'raspberry': 9, 'watermelon': 9,
+            'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9,
+            'salmon': 9, 'tuna': 8, 'sardines': 9, 'mackerel': 9,
+            'chicken breast': 8, 'turkey': 8, 'lean meat': 8,
+            'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
+            'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
+            'greek yogurt': 8, 'cottage cheese': 8, 'tofu': 8, 'tempeh': 8,
+            'edamame': 9, 'hummus': 8, 'salad': 9,
+            
+            # Moderately Healthy/Neutral Foods (5-7 points)
+            'pasta': 6, 'white rice': 6, 'bread': 6, 'whole wheat bread': 7,
+            'rice': 6, 'noodles': 6, 'couscous': 6, 'polenta': 6,
+            'potato': 6, 'sweet potato': 7, 'corn': 6, 'peas': 7,
+            'egg': 7, 'eggs': 7, 'cheese': 6, 'milk': 7, 'yogurt': 7,
+            'peanut butter': 6, 'honey': 6, 'dark chocolate': 7,
+            'olive oil': 7, 'coconut oil': 6, 'butter': 5,
+            'pork': 6, 'beef': 6, 'lamb': 6, 'sausage': 5,
+            'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7,
+            'soup': 6, 'stew': 6, 'curry': 6, 'chili': 6,
+            'sandwich': 6, 'wrap': 6, 'taco': 6, 'burrito': 5,
+            'sushi': 7, 'maki': 7, 'nigiri': 7,
+            'smoothie': 7, 'protein shake': 7, 'juice': 6,
+            'granola': 6, 'cereal': 6, 'muesli': 7, 'bagel': 5,
+            'tortilla': 6, 'pita': 6, 'crackers': 5,
+            
+            # Unhealthy Foods (1-4 points)
+            'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,
+            'french fries': 2, 'fries': 2, 'chips': 2, 'nachos': 3,
+            'hot dog': 3, 'corn dog': 2, 'fried chicken': 3,
+            'doughnut': 2, 'donut': 2, 'pastry': 3, 'croissant': 4,
+            'cake': 3, 'cupcake': 2, 'brownie': 3, 'cookie': 3, 'cookies': 3,
+            'candy': 1, 'chocolate bar': 3, 'ice cream': 3, 'gelato': 3,
+            'milkshake': 2, 'soda': 1, 'energy drink': 2, 'sports drink': 3,
+            'bacon': 3, 'pepperoni': 3, 'salami': 3, 'hot wings': 3,
+            'fried': 2, 'deep fried': 2, 'battered': 2, 'breaded': 3,
+            'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
+            'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4,
+            'ramen': 4, 'instant noodles': 3, 'cup noodles': 3,
+            'white bread': 5, 'white toast': 5, 'pancakes': 4, 'waffles': 4,
+            'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
+        }
         
     @st.cache_resource
     def build_vit_model(_self):
@@ -80,16 +130,13 @@ class HybridFoodAnalyzer:
     
     def extract_image_features(self, img):
         """Extract features from image for similarity matching"""
-        # Resize and convert to array
         img_resized = img.resize(self.img_size)
         img_array = image.img_to_array(img_resized)
         
-        # Extract basic features
         avg_colors = img_array.mean(axis=(0, 1))
         color_variance = img_array.std(axis=(0, 1))
         brightness = img_array.mean()
         
-        # Combine features
         features = np.concatenate([avg_colors, color_variance, [brightness]])
         return features
     
@@ -98,7 +145,6 @@ class HybridFoodAnalyzer:
         if not self.user_corrections:
             return None
         
-        # Find similar corrections
         similarities = []
         for correction in self.user_corrections:
             if 'features' in correction:
@@ -106,7 +152,7 @@ class HybridFoodAnalyzer:
                 distance = np.linalg.norm(features - saved_features)
                 similarity = 1 / (1 + distance)
                 
-                if similarity > 0.85:  # High similarity threshold
+                if similarity > 0.85:
                     similarities.append({
                         'food': correction['correct_food'],
                         'similarity': similarity,
@@ -114,7 +160,6 @@ class HybridFoodAnalyzer:
                     })
         
         if similarities:
-            # Sort by similarity and count
             similarities.sort(key=lambda x: (x['similarity'], x['count']), reverse=True)
             return similarities[0]
         
@@ -142,7 +187,6 @@ class HybridFoodAnalyzer:
     
     def predict_with_resnet(self, img):
         """Predict using ResNet50 ImageNet model"""
-        # Convert to RGB if needed
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
@@ -165,14 +209,11 @@ class HybridFoodAnalyzer:
     
     def predict_food(self, img):
         """Smart prediction using both models and user corrections"""
-        # Extract features for similarity matching
         features = self.extract_image_features(img)
         
-        # Check user corrections first
         user_match = self.check_user_corrections(img, features)
         
         if user_match:
-            # User has corrected similar images before
             st.info(f"🧠 Found similar correction from learning: {user_match['food']} (similarity: {user_match['similarity']:.1%})")
             return [{
                 'name': user_match['food'],
@@ -181,13 +222,9 @@ class HybridFoodAnalyzer:
                 'features': features.tolist()
             }]
         
-        # Try Food-101 first
         vit_results = self.predict_with_vit(img)
-        
-        # Try ResNet50 for comparison
         resnet_results = self.predict_with_resnet(img)
         
-        # Filter ResNet results for food-related items
         food_keywords = ['fruit', 'vegetable', 'meat', 'fish', 'berry', 'apple', 'orange', 
                         'banana', 'pear', 'grape', 'lemon', 'mushroom', 'corn', 'pepper',
                         'tomato', 'potato', 'carrot', 'broccoli', 'strawberry', 'pizza',
@@ -198,542 +235,345 @@ class HybridFoodAnalyzer:
             if any(keyword in r['name'].lower() for keyword in food_keywords)
         ]
         
-        # Add features to results
-        for result in vit_results:
+        combined_results = vit_results + food_resnet_results
+        combined_results.sort(key=lambda x: x['confidence'], reverse=True)
+        
+        for result in combined_results:
             result['features'] = features.tolist()
         
-        # Combine results intelligently
-        if vit_results[0]['confidence'] < 0.3 and food_resnet_results:
-            if food_resnet_results[0]['confidence'] > 0.5:
-                for result in food_resnet_results:
-                    result['features'] = features.tolist()
-                return food_resnet_results[:5]
+        return combined_results[:5] if combined_results else vit_results
+    
+    def get_health_score(self, food_name):
+        """
+        Get health score (1-10) for a food item
+        1-4: Unhealthy (red)
+        5-7: Neutral/Moderate (yellow/orange)
+        8-10: Healthy (green)
+        """
+        food_lower = food_name.lower().strip()
         
-        return vit_results
+        # Direct match
+        if food_lower in self.health_scores:
+            return self.health_scores[food_lower]
+        
+        # Partial match
+        for key, score in self.health_scores.items():
+            if key in food_lower or food_lower in key:
+                return score
+        
+        # Default to neutral if unknown
+        return 6
+    
+    def get_health_category(self, score):
+        """Convert score to category"""
+        if score >= 8:
+            return "Healthy", "🟢", "#28a745"
+        elif score >= 5:
+            return "Neutral", "🟡", "#ffc107"
+        else:
+            return "Unhealthy", "🔴", "#dc3545"
+    
+    def get_health_advice(self, score, food_name):
+        """Generate personalized health advice based on score"""
+        category, emoji, color = self.get_health_category(score)
+        
+        if score >= 9:
+            return f"{emoji} **Excellent choice!** {food_name.title()} is highly nutritious and great for your health. This food is rich in beneficial nutrients that support overall wellness."
+        elif score >= 8:
+            return f"{emoji} **Great option!** {food_name.title()} is a healthy food that contributes positively to a balanced diet. Enjoy it regularly!"
+        elif score >= 7:
+            return f"{emoji} **Good choice!** {food_name.title()} is moderately healthy with decent nutritional value. It's a solid part of a balanced diet."
+        elif score >= 6:
+            return f"{emoji} **Fair option.** {food_name.title()} is neutral - not particularly healthy or unhealthy. Balance it with more nutritious foods throughout the day."
+        elif score >= 5:
+            return f"🟠 **Consume mindfully.** {food_name.title()} should be eaten in moderation. Try to pair it with healthier options and be aware of portion sizes."
+        elif score >= 3:
+            return f"🔴 **Occasional treat only.** {food_name.title()} is high in calories, fats, or sugars. Enjoy it rarely and in small portions as part of an otherwise healthy diet."
+        else:
+            return f"🔴 **Limit intake.** {food_name.title()} is very unhealthy and should be avoided or consumed very rarely. Consider healthier alternatives whenever possible."
+    
+    def analyze_ingredients_health_with_scores(self, ingredients):
+        """Categorize ingredients by health score"""
+        healthy_ings = []      # 8-10
+        neutral_ings = []      # 5-7
+        unhealthy_ings = []    # 1-4
+        
+        for ing in ingredients:
+            score = self.get_health_score(ing)
+            if score >= 8:
+                healthy_ings.append((ing, score))
+            elif score >= 5:
+                neutral_ings.append((ing, score))
+            else:
+                unhealthy_ings.append((ing, score))
+        
+        return healthy_ings, neutral_ings, unhealthy_ings
     
     def add_user_correction(self, predicted_food, correct_food, features, confidence):
-        """Add user correction to learning database"""
-        # Check if this exact food already exists in corrections
-        existing = None
-        for i, correction in enumerate(self.user_corrections):
-            if correction['correct_food'].lower() == correct_food.lower():
-                # Check if features are similar
-                saved_features = np.array(correction['features'])
-                distance = np.linalg.norm(np.array(features) - saved_features)
-                if distance < 50:  # Similar enough
-                    existing = i
-                    break
+        """Add user correction to learning dataset"""
+        correction_entry = {
+            'predicted': predicted_food,
+            'correct_food': correct_food,
+            'features': features,
+            'timestamp': datetime.now().isoformat(),
+            'confidence': confidence,
+            'count': 1
+        }
         
-        if existing is not None:
-            # Update existing correction
-            self.user_corrections[existing]['count'] = self.user_corrections[existing].get('count', 1) + 1
-            self.user_corrections[existing]['last_updated'] = datetime.now().isoformat()
-        else:
-            # Add new correction
-            self.user_corrections.append({
-                'predicted_food': predicted_food,
-                'correct_food': correct_food,
-                'features': features,
-                'confidence': confidence,
-                'timestamp': datetime.now().isoformat(),
-                'count': 1
-            })
+        # Check if similar correction exists
+        found = False
+        for correction in self.user_corrections:
+            if correction['correct_food'].lower() == correct_food.lower():
+                if 'features' in correction:
+                    saved_features = np.array(correction['features'])
+                    current_features = np.array(features)
+                    distance = np.linalg.norm(saved_features - current_features)
+                    similarity = 1 / (1 + distance)
+                    
+                    if similarity > 0.85:
+                        correction['count'] = correction.get('count', 1) + 1
+                        correction['last_seen'] = datetime.now().isoformat()
+                        found = True
+                        break
+        
+        if not found:
+            self.user_corrections.append(correction_entry)
         
         # Add to feedback log
-        self.feedback_log.append({
+        feedback_entry = {
             'timestamp': datetime.now().isoformat(),
             'predicted': predicted_food,
             'correct': correct_food,
-            'was_correct': predicted_food.lower() == correct_food.lower()
-        })
+            'confidence': confidence,
+            'action': 'correction'
+        }
+        self.feedback_log.append(feedback_entry)
         
         self.save_user_corrections()
     
-    def get_learning_stats(self):
-        """Get statistics about learning progress"""
-        total_corrections = len(self.feedback_log)
-        correct_predictions = sum(1 for log in self.feedback_log if log['was_correct'])
-        
-        if total_corrections > 0:
-            accuracy = (correct_predictions / total_corrections) * 100
-        else:
-            accuracy = 0
-        
-        unique_foods = len(self.user_corrections)
-        
-        return {
-            'total_feedback': total_corrections,
-            'correct_predictions': correct_predictions,
-            'accuracy': accuracy,
-            'unique_foods_learned': unique_foods
-        }
-    
-    def get_recipe_ingredients(self, food_name):
-        """Get ingredients using Wikipedia API and fallback database"""
-        
-        # First, try predefined database for common dishes
-        ingredients = self.get_ingredients_from_database(food_name)
-        if ingredients:
-            st.info(f"✅ Found ingredients from database")
-            return {
-                'ingredients': ingredients,
-                'source': 'Built-in database'
-            }
-        
-        # If not in database, try Wikipedia
-        try:
-            import wikipediaapi
-            
-            # Proper user agent as required by Wikipedia
-            wiki = wikipediaapi.Wikipedia(
-                user_agent='FoodHealthAnalyzer/1.0 (Educational App)',
-                language='en'
-            )
-            
-            # Search for the food page
-            page = wiki.page(food_name)
-            
-            if not page.exists():
-                # Try with "cuisine" or "food" suffix
-                page = wiki.page(f"{food_name} (food)")
-            
-            if not page.exists():
-                st.warning(f"No Wikipedia page found for '{food_name}'")
-                return None
-            
-            # Get page text
-            text = page.text.lower()
-            st.write(f"📖 Found Wikipedia article")
-            
-            # Common food ingredients to look for
-            common_ingredients = [
-                'egg', 'eggs', 'milk', 'cheese', 'butter', 'oil', 'olive oil',
-                'flour', 'wheat', 'rice', 'pasta', 'bread', 'sugar', 'salt',
-                'pepper', 'onion', 'garlic', 'tomato', 'chicken', 'beef', 'pork',
-                'fish', 'shrimp', 'potato', 'carrot', 'cream', 'yogurt',
-                'lemon', 'lime', 'herbs', 'spices', 'basil', 'oregano',
-                'parmesan', 'mozzarella', 'cheddar', 'bacon', 'ham',
-                'mushroom', 'spinach', 'broccoli', 'lettuce', 'cucumber',
-                'ricotta', 'meat', 'ground beef', 'sausage', 'marinara',
-                'sauce', 'parsley', 'thyme', 'rosemary', 'vanilla', 'chocolate'
-            ]
-            
-            # Find mentioned ingredients
-            found_ingredients = []
-            
-            for ingredient in common_ingredients:
-                if ingredient in text:
-                    # Avoid duplicates
-                    if ingredient == 'eggs' and 'egg' in found_ingredients:
-                        continue
-                    if ingredient == 'egg' and 'eggs' in found_ingredients:
-                        continue
-                    
-                    if ingredient not in found_ingredients:
-                        found_ingredients.append(ingredient)
-            
-            if found_ingredients:
-                st.success(f"✅ Found {len(found_ingredients)} ingredients from Wikipedia")
-                return {
-                    'ingredients': found_ingredients[:15],
-                    'source': 'Wikipedia'
-                }
-            else:
-                st.warning("No ingredients detected in Wikipedia article")
-                return None
-            
-        except Exception as e:
-            st.error(f"Error accessing Wikipedia: {str(e)}")
-            return None
-    
-    def get_ingredients_from_database(self, food_name):
-        """Built-in ingredient database for common dishes"""
-        
-        # Normalize food name
-        food_lower = food_name.lower().strip()
-        
-        # Common dishes with known ingredients
-        ingredient_db = {
-            # Breakfast
-            'omelette': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
-            'omelet': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
-            'scrambled eggs': ['eggs', 'butter', 'milk', 'salt', 'pepper'],
-            'fried egg': ['eggs', 'oil', 'salt', 'pepper'],
-            'pancake': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
-            'waffle': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
-            'french toast': ['bread', 'eggs', 'milk', 'sugar', 'cinnamon', 'butter'],
-            
-            # Italian
-            'pizza': ['flour', 'yeast', 'tomato', 'mozzarella', 'olive oil', 'basil'],
-            'pasta': ['wheat', 'flour', 'eggs', 'salt', 'water'],
-            'spaghetti': ['pasta', 'tomato', 'garlic', 'olive oil', 'basil'],
-            'lasagna': ['pasta', 'beef', 'tomato', 'ricotta', 'mozzarella', 'parmesan'],
-            'ravioli': ['pasta', 'ricotta', 'cheese', 'eggs', 'spinach', 'flour'],
-            'risotto': ['rice', 'butter', 'parmesan', 'onion', 'chicken broth', 'white wine'],
-            'carbonara': ['pasta', 'eggs', 'bacon', 'parmesan', 'pepper', 'salt'],
-            
-            # American
-            'hamburger': ['beef', 'bread', 'lettuce', 'tomato', 'onion', 'cheese', 'pickles'],
-            'cheeseburger': ['beef', 'bread', 'cheese', 'lettuce', 'tomato', 'onion'],
-            'hot dog': ['sausage', 'bread', 'mustard', 'ketchup', 'onion'],
-            'sandwich': ['bread', 'meat', 'cheese', 'lettuce', 'tomato', 'mayo'],
-            'french fries': ['potato', 'oil', 'salt'],
-            'mashed potato': ['potato', 'butter', 'milk', 'salt', 'pepper'],
-            
-            # Asian
-            'sushi': ['rice', 'fish', 'seaweed', 'vinegar', 'soy sauce', 'wasabi'],
-            'ramen': ['noodles', 'broth', 'egg', 'pork', 'onion', 'soy sauce'],
-            'fried rice': ['rice', 'eggs', 'soy sauce', 'vegetables', 'oil', 'garlic'],
-            'pad thai': ['rice noodles', 'shrimp', 'eggs', 'peanuts', 'lime', 'fish sauce'],
-            'spring roll': ['rice paper', 'shrimp', 'vegetables', 'noodles', 'herbs'],
-            
-            # Mexican
-            'tacos': ['tortilla', 'beef', 'lettuce', 'cheese', 'tomato', 'salsa'],
-            'burrito': ['tortilla', 'rice', 'beans', 'meat', 'cheese', 'salsa'],
-            'quesadilla': ['tortilla', 'cheese', 'chicken', 'peppers', 'onion'],
-            'nachos': ['tortilla chips', 'cheese', 'beans', 'salsa', 'sour cream', 'jalapeño'],
-            
-            # Desserts
-            'cake': ['flour', 'sugar', 'eggs', 'butter', 'milk', 'baking powder'],
-            'chocolate cake': ['flour', 'sugar', 'eggs', 'butter', 'cocoa', 'milk'],
-            'cheesecake': ['cream cheese', 'sugar', 'eggs', 'graham crackers', 'butter'],
-            'ice cream': ['milk', 'cream', 'sugar', 'vanilla', 'eggs'],
-            'cookie': ['flour', 'sugar', 'butter', 'eggs', 'chocolate chips'],
-            'brownie': ['chocolate', 'butter', 'sugar', 'eggs', 'flour'],
-            'donut': ['flour', 'sugar', 'eggs', 'milk', 'butter', 'yeast'],
-            'creme brulee': ['cream', 'eggs', 'sugar', 'vanilla'],
-            'tiramisu': ['mascarpone', 'eggs', 'coffee', 'sugar', 'ladyfingers', 'cocoa'],
-            'apple pie': ['apples', 'flour', 'sugar', 'butter', 'cinnamon'],
-            
-            # Salads
-            'caesar salad': ['lettuce', 'parmesan', 'croutons', 'caesar dressing', 'chicken'],
-            'greek salad': ['lettuce', 'tomato', 'cucumber', 'feta', 'olives', 'olive oil'],
-            'salad': ['lettuce', 'tomato', 'cucumber', 'onion', 'olive oil', 'vinegar'],
-            
-            # Soups
-            'chicken soup': ['chicken', 'broth', 'carrot', 'celery', 'onion', 'noodles'],
-            'tomato soup': ['tomato', 'cream', 'onion', 'garlic', 'basil', 'butter'],
-            'minestrone': ['pasta', 'beans', 'tomato', 'carrot', 'celery', 'onion'],
-            
-            # Meat dishes
-            'steak': ['beef', 'salt', 'pepper', 'butter', 'garlic'],
-            'chicken breast': ['chicken', 'salt', 'pepper', 'oil', 'herbs'],
-            'pork chop': ['pork', 'salt', 'pepper', 'oil', 'garlic'],
-            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter'],
-            
-            # Breakfast
-            'croissant': ['flour', 'butter', 'yeast', 'sugar', 'milk', 'eggs'],
-            'bagel': ['flour', 'yeast', 'salt', 'sugar', 'water'],
-            'muffin': ['flour', 'sugar', 'eggs', 'milk', 'butter', 'baking powder']
-        }
-        
-        # Try exact match
-        if food_lower in ingredient_db:
-            return ingredient_db[food_lower]
-        
-        # Try partial match
-        for dish_name, ingredients in ingredient_db.items():
-            if dish_name in food_lower or food_lower in dish_name:
-                return ingredients
-        
-        return None
-    
-    def analyze_ingredients_health(self, ingredients):
-        """Grade ingredients based on health"""
-        if not ingredients:
-            return [], []
-        
-        # Categorize ingredients
-        healthy = []
-        unhealthy = []
-        
-        healthy_items = [
-            'egg', 'eggs', 'chicken', 'fish', 'shrimp', 'mushroom', 
-            'spinach', 'broccoli', 'lettuce', 'cucumber', 'tomato',
-            'carrot', 'onion', 'garlic', 'herbs', 'basil', 'oregano',
-            'yogurt', 'olive oil', 'lemon', 'lime'
-        ]
-        
-        unhealthy_items = [
-            'sugar', 'butter', 'cream', 'bacon', 'ham', 'cheddar',
-            'mozzarella', 'parmesan', 'oil', 'fried', 'deep fried'
-        ]
-        
-        neutral_items = [
-            'flour', 'wheat', 'rice', 'pasta', 'bread', 'potato',
-            'milk', 'cheese', 'salt', 'pepper', 'spices'
-        ]
-        
-        for ingredient in ingredients:
-            ing_lower = ingredient.lower()
-            
-            if any(h in ing_lower for h in healthy_items):
-                healthy.append(ingredient)
-            elif any(u in ing_lower for u in unhealthy_items):
-                unhealthy.append(ingredient)
-            # Neutral items are not categorized but still shown
-        
-        return healthy, unhealthy
-    
-    def get_usda_nutrition(self, food_name):
-        """Get nutrition information from USDA API"""
+    def get_food_from_usda(self, food_name, num_results=5):
+        """Fetch food data from USDA API"""
         try:
             params = {
                 'api_key': USDA_API_KEY,
                 'query': food_name,
-                'dataType': ['Foundation', 'SR Legacy'],
-                'pageSize': 1
+                'pageSize': num_results,
+                'dataType': ['Foundation', 'SR Legacy']
             }
             
             response = requests.get(USDA_SEARCH_URL, params=params, timeout=10)
             
-            if response.status_code != 200:
-                return None
-            
-            data = response.json()
-            
-            if not data.get('foods') or len(data['foods']) == 0:
-                return None
-            
-            food = data['foods'][0]
-            nutrients = {}
-            
-            for nutrient in food.get('foodNutrients', []):
-                name = nutrient.get('nutrientName', '')
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('foods'):
+                    return data['foods']
+            return None
+        except Exception as e:
+            st.warning(f"⚠️ Could not fetch USDA data: {str(e)}")
+            return None
+    
+    def extract_nutrition_info(self, food_data):
+        """Extract key nutritional information"""
+        if not food_data:
+            return None
+        
+        first_food = food_data[0]
+        nutrients = {}
+        
+        if 'foodNutrients' in first_food:
+            for nutrient in first_food['foodNutrients']:
+                nutrient_name = nutrient.get('nutrientName', '')
                 value = nutrient.get('value', 0)
                 unit = nutrient.get('unitName', '')
                 
-                if name and value:
-                    nutrients[name] = f"{value} {unit}"
-            
-            return {
-                'name': food.get('description', food_name),
-                'nutrients': nutrients
-            }
-            
-        except Exception as e:
-            print(f"Error fetching nutrition data: {e}")
-            return None
+                if value and nutrient_name:
+                    nutrients[nutrient_name] = f"{value:.1f} {unit}"
+        
+        return {
+            'name': first_food.get('description', 'Unknown'),
+            'nutrients': nutrients
+        }
     
-    def analyze_health(self, nutrients):
-        """Analyze health rating based on nutrients"""
+    def extract_ingredients(self, food_data):
+        """Extract ingredients list"""
+        if not food_data:
+            return None
+        
+        first_food = food_data[0]
+        ingredients_text = first_food.get('ingredients', '')
+        
+        if ingredients_text:
+            ingredients_list = [
+                ing.strip() 
+                for ing in ingredients_text.lower().split(',')
+                if ing.strip()
+            ]
+            return {
+                'ingredients': ingredients_list[:10],
+                'raw_text': ingredients_text
+            }
+        
+        return None
+    
+    def analyze_health_from_nutrients(self, nutrients):
+        """Analyze health rating based on nutritional data"""
         if not nutrients:
-            return "Unknown", "⚪"
+            return "Unknown", "❓"
         
-        health_score = 0
-        max_score = 0
+        issues = []
         
-        positive_nutrients = {
-            'Protein': 2,
-            'Fiber, total dietary': 2,
-            'Vitamin C, total ascorbic acid': 1,
-            'Vitamin A, IU': 1,
-            'Calcium, Ca': 1,
-            'Iron, Fe': 1
-        }
+        for key, value in nutrients.items():
+            value_str = str(value).split()[0]
+            try:
+                num_value = float(value_str)
+                
+                if 'Total lipid (fat)' in key and num_value > 20:
+                    issues.append('high_fat')
+                if 'Sugars' in key and num_value > 15:
+                    issues.append('high_sugar')
+                if 'Sodium' in key and num_value > 400:
+                    issues.append('high_sodium')
+                if 'Cholesterol' in key and num_value > 50:
+                    issues.append('high_cholesterol')
+            except:
+                continue
         
-        negative_nutrients = {
-            'Total lipid (fat)': -2,
-            'Fatty acids, total saturated': -2,
-            'Sugars, total including NLEA': -2,
-            'Sodium, Na': -2,
-            'Cholesterol': -1
-        }
-        
-        for nutrient, weight in positive_nutrients.items():
-            max_score += abs(weight)
-            if nutrient in nutrients:
-                try:
-                    value = float(nutrients[nutrient].split()[0])
-                    if value > 5:
-                        health_score += weight
-                except:
-                    pass
-        
-        for nutrient, weight in negative_nutrients.items():
-            max_score += abs(weight)
-            if nutrient in nutrients:
-                try:
-                    value = float(nutrients[nutrient].split()[0])
-                    thresholds = {
-                        'Total lipid (fat)': 20,
-                        'Fatty acids, total saturated': 5,
-                        'Sugars, total including NLEA': 10,
-                        'Sodium, Na': 500,
-                        'Cholesterol': 100
-                    }
-                    if value > thresholds.get(nutrient, 10):
-                        health_score += weight
-                except:
-                    pass
-        
-        if max_score == 0:
-            return "Unknown", "⚪"
-        
-        score_ratio = health_score / max_score
-        
-        if score_ratio > 0.3:
-            return "Healthy", "🟢"
-        elif score_ratio > -0.3:
+        if len(issues) >= 2:
+            return "Unhealthy", "🔴"
+        elif len(issues) == 1:
             return "Moderate", "🟡"
         else:
-            return "Unhealthy", "🔴"
+            return "Healthy", "🟢"
 
+# Initialize analyzer
 @st.cache_resource
 def get_analyzer():
     return HybridFoodAnalyzer()
 
-analyzer = get_analyzer()
-
 def main():
-    st.title("🍎 Food Health Analyzer with Learning")
-    st.markdown("""
-    Upload a photo of food to identify it and get nutritional information!
+    st.title("🍎 Food Health Analyzer with Smart Scoring")
+    st.markdown("**AI-powered food recognition with 1-10 health scoring system**")
     
-    **Features:**
-    - 🍽️ Smart AI recognition (dishes + ingredients)
-    - 📊 Nutritional information from USDA database
-    - 💚 Health rating based on nutritional content
-    - 🧠 **NEW: Learns from your corrections!**
-    """)
+    analyzer = get_analyzer()
     
+    # Sidebar
     with st.sidebar:
-        st.header("🧠 Learning Statistics")
+        st.header("📊 Learning Statistics")
         
-        stats = analyzer.get_learning_stats()
+        total_corrections = len(analyzer.user_corrections)
+        total_feedback = len(analyzer.feedback_log)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Total Feedback", stats['total_feedback'])
-            st.metric("Unique Foods", stats['unique_foods_learned'])
-        
-        with col2:
-            st.metric("Correct", stats['correct_predictions'])
-            if stats['total_feedback'] > 0:
-                st.metric("Accuracy", f"{stats['accuracy']:.1f}%")
-        
-        if stats['total_feedback'] > 0:
-            st.progress(stats['accuracy'] / 100, text=f"Learning Progress")
-        
-        st.markdown("---")
+        st.metric("Total Corrections", total_corrections)
+        st.metric("Total Interactions", total_feedback)
         
         if analyzer.user_corrections:
-            st.subheader("📚 Learned Foods")
-            for correction in analyzer.user_corrections[-5:]:
-                count = correction.get('count', 1)
-                st.write(f"✅ {correction['correct_food']} (×{count})")
+            st.markdown("### 🧠 Most Corrected Foods")
+            food_counts = {}
+            for correction in analyzer.user_corrections:
+                food = correction['correct_food']
+                food_counts[food] = food_counts.get(food, 0) + correction.get('count', 1)
+            
+            sorted_foods = sorted(food_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            for food, count in sorted_foods:
+                st.write(f"• **{food.title()}**: {count}x")
         
         st.markdown("---")
+        st.markdown("### 🎯 Health Score Guide")
+        st.markdown("""
+        **🟢 8-10**: Highly nutritious
+        **🟡 5-7**: Neutral/Moderate
+        **🔴 1-4**: Limit consumption
+        """)
         
-        if st.button("🔄 Reset Learning Data", type="secondary"):
-            analyzer.user_corrections = []
-            analyzer.feedback_log = []
-            analyzer.save_user_corrections()
-            st.success("Learning data reset!")
+        st.markdown("---")
+        if st.button("🗑️ Clear Learning Data"):
+            if os.path.exists(USER_CORRECTIONS_FILE):
+                os.remove(USER_CORRECTIONS_FILE)
+            if os.path.exists(FEEDBACK_FILE):
+                os.remove(FEEDBACK_FILE)
+            st.success("✅ Learning data cleared!")
+            time.sleep(1)
             st.rerun()
-        
-        st.markdown("---")
-        st.header("📝 Tips for Best Results")
-        st.markdown("""
-        - Use clear, well-lit photos
-        - Center the food in the frame
-        - Works best with:
-          - Individual fruits/vegetables
-          - Common prepared dishes
-          - Single food items
-        """)
-        
-        st.markdown("---")
-        st.markdown("### About")
-        st.markdown("""
-        This app uses **hybrid AI**:
-        - **Food-101 ViT** for prepared dishes
-        - **ResNet50 ImageNet** for fruits, vegetables, and ingredients
-        - **User Learning** from your corrections
-        
-        Nutritional data from **USDA FoodData Central**.
-        """)
+    
+    # Main content
+    st.markdown("---")
     
     uploaded_file = st.file_uploader(
-        "Choose a food image...", 
-        type=['png', 'jpg', 'jpeg'],
-        help="Upload a clear photo of food"
+        "📤 Upload a food image",
+        type=['jpg', 'jpeg', 'png'],
+        help="Upload a clear photo of food for AI analysis"
     )
     
-    if uploaded_file is not None:
+    if uploaded_file:
         img = Image.open(uploaded_file)
         
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-        
-        col1, col2 = st.columns([1, 1])
+        col1, col2 = st.columns([1, 2])
         
         with col1:
             st.image(img, caption="Uploaded Image", use_container_width=True)
         
         with col2:
-            st.subheader("🔍 Analyzing...")
-            
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            try:
-                status_text.text("🤖 Identifying food with AI...")
-                progress_bar.progress(33)
+            with st.spinner("🔍 Analyzing image with AI..."):
                 predictions = analyzer.predict_food(img)
+            
+            if predictions:
+                st.subheader("🤖 AI Predictions")
                 
-                status_text.text("📊 Fetching nutritional data...")
-                progress_bar.progress(50)
-                top_food = predictions[0]['name'].replace('_', ' ')
-                nutrition_data = analyzer.get_usda_nutrition(top_food)
+                for i, pred in enumerate(predictions[:3], 1):
+                    food_name = pred['name'].replace('_', ' ').title()
+                    confidence = pred['confidence']
+                    source = pred['source']
+                    
+                    # Get health score
+                    score = analyzer.get_health_score(pred['name'])
+                    category, emoji, color = analyzer.get_health_category(score)
+                    
+                    # Display prediction with score
+                    st.markdown(f"""
+                    **{i}. {food_name}** ({source})  
+                    Confidence: {confidence:.1%} | Health Score: {emoji} **{score}/10** ({category})
+                    """)
                 
-                status_text.text("🔍 Searching for ingredients...")
-                progress_bar.progress(75)
-                ingredients_data = analyzer.get_recipe_ingredients(top_food)
-                
-                status_text.text("✅ Analysis complete!")
-                progress_bar.progress(100)
-                
-                import time
-                time.sleep(0.5)
-                status_text.empty()
-                progress_bar.empty()
-                
-                st.success("Analysis complete! 🎉")
-                
-            except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
-                return
+                st.session_state.current_prediction = predictions[0]
         
         st.markdown("---")
         
-        # Prediction Results with Feedback
-        st.subheader("🍽️ Food Recognition Results")
+        # Detailed analysis for top prediction
+        top_prediction = predictions[0]
+        top_food = top_prediction['name'].replace('_', ' ')
         
-        # Store prediction in session state
-        if 'current_prediction' not in st.session_state:
-            st.session_state.current_prediction = None
+        st.header(f"📋 Detailed Analysis: {top_food.title()}")
         
-        st.session_state.current_prediction = {
-            'food': top_food,
-            'predictions': predictions,
-            'features': predictions[0].get('features', [])
-        }
+        # Health Score Section
+        score = analyzer.get_health_score(top_food)
+        category, emoji, color = analyzer.get_health_category(score)
+        advice = analyzer.get_health_advice(score, top_food)
         
-        # Show predictions
-        for i, pred in enumerate(predictions, 1):
-            confidence_pct = pred['confidence'] * 100
-            source = pred.get('source', 'AI')
-            
-            if i == 1:
-                st.markdown(f"### **Top Prediction:** {pred['name'].replace('_', ' ').title()}")
-                st.progress(pred['confidence'], text=f"Confidence: {confidence_pct:.1f}% _{source}_")
+        # Score visualization
+        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        with col1:
+            st.markdown(f"### {emoji}")
+        
+        with col2:
+            st.markdown(f"### Health Score: **{score}/10**")
+            st.progress(score / 10)
+            st.markdown(f"**Category:** {category}")
+        
+        with col3:
+            if score >= 8:
+                st.success("Excellent!")
+            elif score >= 5:
+                st.warning("Moderate")
             else:
-                st.write(f"**{i}.** {pred['name'].replace('_', ' ').title()} - {confidence_pct:.2f}% _{source}_")
+                st.error("Limit Intake")
+        
+        st.info(advice)
+        
+        st.markdown("---")
         
         # Feedback Section
-        st.markdown("---")
-        st.subheader("📝 Was this prediction correct?")
+        st.subheader("💬 Is this prediction correct?")
         
         feedback_col1, feedback_col2 = st.columns(2)
         
@@ -781,60 +621,78 @@ def main():
         
         st.markdown("---")
         
-        # Ingredients Section (if found)
+        # Try to get USDA nutritional data
+        with st.spinner("🔍 Fetching nutritional data..."):
+            usda_data = analyzer.get_food_from_usda(top_food)
+            nutrition_data = analyzer.extract_nutrition_info(usda_data)
+            ingredients_data = analyzer.extract_ingredients(usda_data)
+        
+        # Ingredients Section with Scores
         if ingredients_data:
-            st.subheader("🥘 Main Ingredients")
+            st.subheader("🥘 Ingredient Analysis")
             
             ingredients_list = ingredients_data['ingredients']
-            healthy_ings, unhealthy_ings = analyzer.analyze_ingredients_health(ingredients_list)
+            healthy_ings, neutral_ings, unhealthy_ings = analyzer.analyze_ingredients_health_with_scores(ingredients_list)
             
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                st.markdown("**All Ingredients:**")
-                for ing in ingredients_list:
-                    st.write(f"• {ing.title()}")
+                st.markdown("**🟢 Healthy (8-10)**")
+                if healthy_ings:
+                    for ing, score in healthy_ings:
+                        st.write(f"• {ing.title()} ({score}/10)")
+                else:
+                    st.write("_None identified_")
             
             with col2:
-                if healthy_ings:
-                    st.markdown("**✅ Healthy:**")
-                    for ing in healthy_ings:
-                        st.write(f"• {ing.title()}")
+                st.markdown("**🟡 Neutral (5-7)**")
+                if neutral_ings:
+                    for ing, score in neutral_ings:
+                        st.write(f"• {ing.title()} ({score}/10)")
                 else:
-                    st.markdown("**✅ Healthy:**")
                     st.write("_None identified_")
             
             with col3:
+                st.markdown("**🔴 Unhealthy (1-4)**")
                 if unhealthy_ings:
-                    st.markdown("**⚠️ Watch Out:**")
-                    for ing in unhealthy_ings:
-                        st.write(f"• {ing.title()}")
+                    for ing, score in unhealthy_ings:
+                        st.write(f"• {ing.title()} ({score}/10)")
                 else:
-                    st.markdown("**⚠️ Watch Out:**")
                     st.write("_None identified_")
             
-            # Ingredients health summary
-            if len(healthy_ings) > len(unhealthy_ings):
-                st.success("💚 This dish contains mostly healthy ingredients!")
-            elif len(unhealthy_ings) > len(healthy_ings):
-                st.warning("⚠️ This dish contains ingredients to consume in moderation.")
-            else:
-                st.info("ℹ️ This dish has a balanced mix of ingredients.")
+            # Overall ingredient score
+            if ingredients_list:
+                total_score = (
+                    sum(score for _, score in healthy_ings) +
+                    sum(score for _, score in neutral_ings) +
+                    sum(score for _, score in unhealthy_ings)
+                )
+                avg_score = total_score / len(ingredients_list)
+                
+                st.markdown(f"**Overall Ingredient Score: {avg_score:.1f}/10**")
+                
+                if avg_score >= 7:
+                    st.success("💚 This dish contains mostly healthy ingredients!")
+                elif avg_score >= 5:
+                    st.info("ℹ️ This dish has a balanced mix of ingredients.")
+                else:
+                    st.warning("⚠️ This dish contains ingredients to consume in moderation.")
             
             st.markdown("---")
         
         # Nutritional Information
         if nutrition_data:
             nutrients = nutrition_data['nutrients']
-            health_rating, emoji = analyzer.analyze_health(nutrients)
+            health_rating, health_emoji = analyzer.analyze_health_from_nutrients(nutrients)
+            
+            st.subheader("📊 Nutritional Information")
             
             col1, col2 = st.columns([2, 1])
             
             with col1:
-                st.subheader("📊 Nutritional Information")
                 st.write(f"**Food:** {nutrition_data['name']}")
                 
-                # Extract and display calories prominently
+                # Extract calories
                 calories = "Not available"
                 for key in nutrients.keys():
                     if 'energy' in key.lower() or 'calor' in key.lower():
@@ -842,15 +700,15 @@ def main():
                         break
                 
                 st.metric(label="🔥 Calories (per 100g)", value=calories)
-                st.write(f"**Health Rating:** {emoji} {health_rating}")
+                st.write(f"**Nutrient-Based Rating:** {health_emoji} {health_rating}")
             
             with col2:
                 if health_rating == "Healthy":
-                    st.success("✅ Healthy Choice!")
+                    st.success("✅ Nutritious")
                 elif health_rating == "Moderate":
-                    st.warning("⚠️ Consume in Moderation")
+                    st.warning("⚠️ Moderate")
                 else:
-                    st.error("⚠️ High in Fats/Sugars/Sodium")
+                    st.error("⚠️ Watch Intake")
             
             st.markdown("**Key Nutrients (per 100g):**")
             
@@ -884,18 +742,8 @@ def main():
                 with col2:
                     for nutrient, value in nutrient_data[mid:]:
                         st.write(f"• **{nutrient}:** {value}")
-            
-            st.markdown("---")
-            st.subheader("💡 Health Insights")
-            
-            if health_rating == "Healthy":
-                st.markdown("✅ **This food appears to be a healthy choice!** It contains beneficial nutrients that contribute to a balanced diet.")
-            elif health_rating == "Moderate":
-                st.markdown("⚠️ **This food is okay in moderation.** Be mindful of portion sizes and try to balance it with other nutritious foods.")
-            else:
-                st.markdown("⚠️ **This food may be high in fats, sugars, or sodium.** Consider consuming it occasionally and in small portions.")
         else:
-            st.info(f"ℹ️ Nutritional information not available for '{top_food}' in the USDA database. Try searching for a similar food name.")
+            st.info(f"ℹ️ Nutritional information not available for '{top_food}' in the USDA database.")
     
     else:
         st.info("👆 Upload an image to get started!")
@@ -905,7 +753,7 @@ def main():
         with col1:
             st.markdown("""
             **Individual Ingredients:**
-            - 🍎 Fruits (apple, banana, orange, pear)
+            - 🍎 Fruits (apple, banana, orange)
             - 🥕 Vegetables (carrot, broccoli, tomato)
             - 🍄 Mushrooms
             - 🌽 Corn, peppers
@@ -921,14 +769,14 @@ def main():
             """)
         
         st.markdown("---")
-        st.markdown("### 🧠 How Learning Works")
+        st.markdown("### 🎯 How the Scoring Works")
         st.markdown("""
-        1. **Upload** a food image and get AI predictions
-        2. **Confirm** if correct, or provide the **correct name**
-        3. **The model learns** and will recognize similar foods better next time
-        4. **Track progress** in the sidebar statistics
+        **Health scores range from 1-10:**
+        - **8-10 (🟢)**: Highly nutritious foods rich in vitamins, minerals, and beneficial nutrients
+        - **5-7 (🟡)**: Neutral foods that are okay in moderation
+        - **1-4 (🔴)**: Foods high in calories, fats, sugars, or sodium - consume sparingly
         
-        The more you use it, the smarter it gets! 🚀
+        The app combines AI image recognition with nutritional science to give you instant health insights!
         """)
 
 if __name__ == "__main__":
