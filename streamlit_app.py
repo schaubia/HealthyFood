@@ -339,17 +339,37 @@ class HybridFoodAnalyzer:
         if not found:
             self.user_corrections.append(correction_entry)
         
-        # Add to feedback log
+        # Add to feedback log with was_correct flag
         feedback_entry = {
             'timestamp': datetime.now().isoformat(),
             'predicted': predicted_food,
             'correct': correct_food,
             'confidence': confidence,
-            'action': 'correction'
+            'was_correct': predicted_food.lower() == correct_food.lower(),
+            'action': 'feedback'
         }
         self.feedback_log.append(feedback_entry)
         
         self.save_user_corrections()
+    
+    def get_learning_stats(self):
+        """Get statistics about learning progress"""
+        total_feedback = len(self.feedback_log)
+        correct_predictions = sum(1 for log in self.feedback_log if log.get('was_correct', False))
+        
+        if total_feedback > 0:
+            accuracy = (correct_predictions / total_feedback) * 100
+        else:
+            accuracy = 0
+        
+        unique_foods = len(self.user_corrections)
+        
+        return {
+            'total_feedback': total_feedback,
+            'correct_predictions': correct_predictions,
+            'accuracy': accuracy,
+            'unique_foods_learned': unique_foods
+        }
     
     def get_food_from_usda(self, food_name, num_results=5):
         """Fetch food data from USDA API"""
@@ -458,24 +478,33 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header("📊 Learning Statistics")
+        st.header("🧠 Learning Statistics")
         
-        total_corrections = len(analyzer.user_corrections)
-        total_feedback = len(analyzer.feedback_log)
+        stats = analyzer.get_learning_stats()
         
-        st.metric("Total Corrections", total_corrections)
-        st.metric("Total Interactions", total_feedback)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Total Feedback", stats['total_feedback'])
+            st.metric("Corrections", stats['unique_foods_learned'])
+        
+        with col2:
+            st.metric("Correct", stats['correct_predictions'])
+            if stats['total_feedback'] > 0:
+                st.metric("Accuracy", f"{stats['accuracy']:.1f}%")
+        
+        if stats['total_feedback'] > 0:
+            st.progress(stats['accuracy'] / 100, text=f"Model Accuracy: {stats['accuracy']:.1f}%")
+        
+        st.markdown("---")
         
         if analyzer.user_corrections:
-            st.markdown("### 🧠 Most Corrected Foods")
-            food_counts = {}
-            for correction in analyzer.user_corrections:
-                food = correction['correct_food']
-                food_counts[food] = food_counts.get(food, 0) + correction.get('count', 1)
-            
-            sorted_foods = sorted(food_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-            for food, count in sorted_foods:
-                st.write(f"• **{food.title()}**: {count}x")
+            st.markdown("### 📚 Recently Learned")
+            # Show last 5 corrections
+            recent_corrections = analyzer.user_corrections[-5:]
+            for correction in reversed(recent_corrections):
+                food_name = correction['correct_food'].title()
+                count = correction.get('count', 1)
+                st.write(f"✅ {food_name} (×{count})")
         
         st.markdown("---")
         st.markdown("### 🎯 Health Score Guide")
