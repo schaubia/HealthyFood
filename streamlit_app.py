@@ -519,20 +519,36 @@ def main():
             if predictions:
                 st.subheader("🤖 AI Predictions")
                 
-                for i, pred in enumerate(predictions[:3], 1):
-                    food_name = pred['name'].replace('_', ' ').title()
-                    confidence = pred['confidence']
-                    source = pred['source']
+                # Top prediction with prominent display
+                top_pred = predictions[0]
+                top_food_name = top_pred['name'].replace('_', ' ').title()
+                top_confidence = top_pred['confidence']
+                top_source = top_pred['source']
+                
+                # Get health score for top prediction
+                top_score = analyzer.get_health_score(top_pred['name'])
+                top_category, top_emoji, top_color = analyzer.get_health_category(top_score)
+                
+                st.markdown(f"### **Top Match:** {top_food_name}")
+                st.progress(top_confidence, text=f"🎯 Recognition Confidence: {top_confidence:.1%} ({top_source})")
+                st.markdown(f"Health Score: {top_emoji} **{top_score}/10** ({top_category})")
+                
+                # Additional predictions
+                if len(predictions) > 1:
+                    st.markdown("---")
+                    st.markdown("**Other Possibilities:**")
                     
-                    # Get health score
-                    score = analyzer.get_health_score(pred['name'])
-                    category, emoji, color = analyzer.get_health_category(score)
-                    
-                    # Display prediction with score
-                    st.markdown(f"""
-                    **{i}. {food_name}** ({source})  
-                    Confidence: {confidence:.1%} | Health Score: {emoji} **{score}/10** ({category})
-                    """)
+                    for i, pred in enumerate(predictions[1:4], 2):
+                        food_name = pred['name'].replace('_', ' ').title()
+                        confidence = pred['confidence']
+                        source = pred['source']
+                        
+                        # Get health score
+                        score = analyzer.get_health_score(pred['name'])
+                        category, emoji, color = analyzer.get_health_category(score)
+                        
+                        confidence_pct = confidence * 100
+                        st.write(f"**{i}.** {food_name} - {confidence_pct:.2f}% ({source}) | {emoji} {score}/10")
                 
                 st.session_state.current_prediction = predictions[0]
         
@@ -543,6 +559,54 @@ def main():
         top_food = top_prediction['name'].replace('_', ' ')
         
         st.header(f"📋 Detailed Analysis: {top_food.title()}")
+        
+        # Recognition Accuracy Section
+        st.subheader("🎯 Recognition Accuracy")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            confidence_pct = top_prediction['confidence'] * 100
+            st.metric(
+                label="Model Confidence",
+                value=f"{confidence_pct:.1f}%",
+                help="How confident the AI is in this prediction"
+            )
+        
+        with col2:
+            st.metric(
+                label="Detection Source",
+                value=top_prediction['source'],
+                help="Which AI model made this prediction"
+            )
+        
+        with col3:
+            # Confidence rating
+            if confidence_pct >= 90:
+                confidence_rating = "Very High ⭐⭐⭐"
+            elif confidence_pct >= 75:
+                confidence_rating = "High ⭐⭐"
+            elif confidence_pct >= 60:
+                confidence_rating = "Moderate ⭐"
+            else:
+                confidence_rating = "Low"
+            
+            st.metric(
+                label="Accuracy Rating",
+                value=confidence_rating,
+                help="Overall reliability of this prediction"
+            )
+        
+        # Accuracy interpretation
+        if confidence_pct >= 90:
+            st.success("✅ **Very confident prediction** - The model is highly certain about this identification.")
+        elif confidence_pct >= 75:
+            st.info("ℹ️ **Confident prediction** - The model has good certainty about this identification.")
+        elif confidence_pct >= 60:
+            st.warning("⚠️ **Moderate confidence** - The model is somewhat uncertain. Please verify the prediction.")
+        else:
+            st.error("⚠️ **Low confidence** - The model is not very certain. Consider providing a correction to help it learn.")
+        
+        st.markdown("---")
         
         # Health Score Section
         score = analyzer.get_health_score(top_food)
