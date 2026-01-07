@@ -56,7 +56,7 @@ class HybridFoodAnalyzer:
             'chicken breast': 8, 'turkey': 8, 'lean meat': 8,
             'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
             'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
-            'greek yogurt': 8, 'cottage cheese': 8, 'tofu': 8, 'tempeh': 8,
+            'greek yogurt': 8, 'cottage cheese': 8, 'honey': 8, 'tempeh': 8,
             'edamame': 9, 'hummus': 8, 'salad': 9,
             
             # Moderately Healthy/Neutral Foods (5-7 points)
@@ -64,7 +64,7 @@ class HybridFoodAnalyzer:
             'rice': 6, 'noodles': 6, 'couscous': 6, 'polenta': 6,
             'potato': 6, 'sweet potato': 7, 'corn': 6, 'peas': 7,
             'egg': 7, 'eggs': 7, 'cheese': 6, 'milk': 7, 'yogurt': 7,
-            'peanut butter': 6, 'honey': 6, 'dark chocolate': 7,
+            'peanut butter': 6, 'tofu': 6, 'dark chocolate': 7,
             'olive oil': 7, 'coconut oil': 6, 'butter': 5,
             'pork': 6, 'beef': 6, 'lamb': 6, 'sausage': 5,
             'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7,
@@ -73,7 +73,7 @@ class HybridFoodAnalyzer:
             'sushi': 7, 'maki': 7, 'nigiri': 7,
             'smoothie': 7, 'protein shake': 7, 'juice': 6,
             'granola': 6, 'cereal': 6, 'muesli': 7, 'bagel': 5,
-            'tortilla': 6, 'pita': 6, 'crackers': 5,
+            'tortilla': 6, 'pita': 6, 'crackers': 5, 'pancakes': 5,
             
             # Unhealthy Foods (1-4 points)
             'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,
@@ -88,7 +88,7 @@ class HybridFoodAnalyzer:
             'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
             'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4,
             'ramen': 4, 'instant noodles': 3, 'cup noodles': 3,
-            'white bread': 5, 'white toast': 5, 'pancakes': 4, 'waffles': 4,
+            'white bread': 5, 'white toast': 4,  'waffles': 4,
             'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
         }
         
@@ -380,9 +380,9 @@ class HybridFoodAnalyzer:
             # Breakfast
             'omelette': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
             'omelet': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
-            'scrambled eggs': ['eggs', 'butter', 'milk', 'salt', 'pepper'],
+            'scrambled eggs': ['eggs', 'butter', 'milk', 'salt', 'pepper', 'oil'],
             'fried egg': ['eggs', 'oil', 'salt', 'pepper'],
-            'pancake': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
+            'pancake': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'oil'],
             'waffle': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
             'french toast': ['bread', 'eggs', 'milk', 'sugar', 'cinnamon', 'butter'],
             
