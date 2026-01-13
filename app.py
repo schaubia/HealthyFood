@@ -111,7 +111,7 @@ class FoodHealthAnalyzer:
         
         # Positive nutrients
         positive_nutrients = {
-            'Protein': 2,
+            'Protein': 1,
             'Fiber, total dietary': 2,
             'Vitamin C, total ascorbic acid': 1,
             'Vitamin A, IU': 1,
