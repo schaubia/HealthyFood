@@ -52,12 +52,11 @@ class HybridFoodAnalyzer:
             'fruits': 8, 'apple': 9, 'banana': 8, 'orange': 9, 'berries': 10,
             'strawberry': 9, 'blueberry': 10, 'raspberry': 9, 'watermelon': 9,
             'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9,
-            'salmon': 9, 'tuna': 8, 'sardines': 9, 'mackerel': 9,
-            'chicken breast': 8, 'turkey': 8, 'lean meat': 8,
+            'salmon': 9, 'tuna': 8, 'sardines': 9, 'mackerel': 9, 'turkey': 8, 'lean meat': 8,
             'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
             'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
             'greek yogurt': 8, 'cottage cheese': 8, 'honey': 8, 'tempeh': 8,
-            'edamame': 9, 'hummus': 8, 'salad': 9,
+            'edamame': 9, 'hummus': 8, 'salad': 9, 'fish': 8, 'onion':8, 'garlic':8,
             
             # Moderately Healthy/Neutral Foods (5-7 points)
             'pasta': 6, 'white rice': 6, 'bread': 6, 'whole wheat bread': 7,
@@ -70,7 +69,7 @@ class HybridFoodAnalyzer:
             'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7,
             'soup': 6, 'stew': 6, 'curry': 6, 'chili': 6,
             'sandwich': 6, 'wrap': 6, 'taco': 6, 'burrito': 5,
-            'sushi': 7, 'maki': 7, 'nigiri': 7,
+            'sushi': 7, 'maki': 7, 'nigiri': 7, 'chicken breast': 7,
             'smoothie': 7, 'protein shake': 7, 'juice': 6,
             'granola': 6, 'cereal': 6, 'muesli': 7, 'bagel': 5,
             'tortilla': 6, 'pita': 6, 'crackers': 5, 'pancakes': 5,
