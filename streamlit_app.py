@@ -49,30 +49,32 @@ class HybridFoodAnalyzer:
             'vegetables': 9, 'broccoli': 10, 'spinach': 10, 'kale': 10, 'carrot': 9,
             'tomato': 9, 'lettuce': 9, 'cucumber': 9, 'bell pepper': 9, 'zucchini': 9,
             'cauliflower': 9, 'brussels sprouts': 9, 'asparagus': 9, 'celery': 9,
+            'onion': 8, 'garlic': 9, 'ginger': 8,
             'fruits': 8, 'apple': 9, 'banana': 8, 'orange': 9, 'berries': 10,
             'strawberry': 9, 'blueberry': 10, 'raspberry': 9, 'watermelon': 9,
             'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9,
-            'salmon': 9, 'tuna': 8, 'sardines': 9, 'mackerel': 9, 'turkey': 8, 'lean meat': 8,
+            'salmon': 9, 'tuna': 8, 'sardines': 9, 'mackerel': 9,
+            'chicken breast': 8, 'turkey': 8, 'lean meat': 8,
             'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
             'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
-            'greek yogurt': 8, 'cottage cheese': 8, 'honey': 8, 'tempeh': 8,
-            'edamame': 9, 'hummus': 8, 'salad': 9, 'fish': 8, 'onion':8, 'garlic':8,
+            'greek yogurt': 8, 'cottage cheese': 8, 'tofu': 8, 'tempeh': 8,
+            'edamame': 9, 'hummus': 8, 'salad': 9,
             
             # Moderately Healthy/Neutral Foods (5-7 points)
             'pasta': 6, 'white rice': 6, 'bread': 6, 'whole wheat bread': 7,
             'rice': 6, 'noodles': 6, 'couscous': 6, 'polenta': 6,
             'potato': 6, 'sweet potato': 7, 'corn': 6, 'peas': 7,
             'egg': 7, 'eggs': 7, 'cheese': 6, 'milk': 7, 'yogurt': 7,
-            'peanut butter': 6, 'tofu': 6, 'dark chocolate': 7,
+            'peanut butter': 6, 'honey': 6, 'dark chocolate': 7,
             'olive oil': 7, 'coconut oil': 6, 'butter': 5,
             'pork': 6, 'beef': 6, 'lamb': 6, 'sausage': 5,
             'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7,
             'soup': 6, 'stew': 6, 'curry': 6, 'chili': 6,
             'sandwich': 6, 'wrap': 6, 'taco': 6, 'burrito': 5,
-            'sushi': 7, 'maki': 7, 'nigiri': 7, 'chicken breast': 7,
+            'sushi': 7, 'maki': 7, 'nigiri': 7,
             'smoothie': 7, 'protein shake': 7, 'juice': 6,
             'granola': 6, 'cereal': 6, 'muesli': 7, 'bagel': 5,
-            'tortilla': 6, 'pita': 6, 'crackers': 5, 'pancakes': 5,
+            'tortilla': 6, 'pita': 6, 'crackers': 5,
             
             # Unhealthy Foods (1-4 points)
             'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,
@@ -87,7 +89,7 @@ class HybridFoodAnalyzer:
             'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
             'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4,
             'ramen': 4, 'instant noodles': 3, 'cup noodles': 3,
-            'white bread': 5, 'white toast': 4,  'waffles': 4,
+            'white bread': 5, 'white toast': 5, 'pancakes': 4, 'waffles': 4,
             'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
         }
         
@@ -248,19 +250,32 @@ class HybridFoodAnalyzer:
         1-4: Unhealthy (red)
         5-7: Neutral/Moderate (yellow/orange)
         8-10: Healthy (green)
+        
+        Uses smart matching: exact match > longer phrase match > partial match
         """
         food_lower = food_name.lower().strip()
         
-        # Direct match
+        # Step 1: Try exact match first (highest priority)
         if food_lower in self.health_scores:
             return self.health_scores[food_lower]
         
-        # Partial match
+        # Step 2: Try to find matches and prioritize longer/more specific matches
+        matches = []
         for key, score in self.health_scores.items():
-            if key in food_lower or food_lower in key:
-                return score
+            # Check if key is in food name or vice versa
+            if key in food_lower:
+                matches.append((key, score, len(key)))
+            elif food_lower in key:
+                matches.append((key, score, len(key)))
         
-        # Default to neutral if unknown
+        # If we found matches, return the score of the longest match
+        # (longer matches are more specific, e.g., "onion rings" vs "onion")
+        if matches:
+            # Sort by length (descending) to get the most specific match
+            matches.sort(key=lambda x: x[2], reverse=True)
+            return matches[0][1]
+        
+        # Step 3: Default to neutral if unknown
         return 6
     
     def get_health_category(self, score):
@@ -379,9 +394,9 @@ class HybridFoodAnalyzer:
             # Breakfast
             'omelette': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
             'omelet': ['eggs', 'cheese', 'butter', 'milk', 'salt', 'pepper'],
-            'scrambled eggs': ['eggs', 'butter', 'milk', 'salt', 'pepper', 'oil'],
+            'scrambled eggs': ['eggs', 'butter', 'milk', 'salt', 'pepper'],
             'fried egg': ['eggs', 'oil', 'salt', 'pepper'],
-            'pancake': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'oil'],
+            'pancake': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
             'waffle': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
             'french toast': ['bread', 'eggs', 'milk', 'sugar', 'cinnamon', 'butter'],
             
