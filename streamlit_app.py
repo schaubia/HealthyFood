@@ -104,6 +104,65 @@ class HybridFoodAnalyzer:
             'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
         }
         
+        # Common food allergens (FDA's Big 9 + other common allergens)
+        self.allergens = {
+            # FDA Big 9 Allergens
+            'milk': ['milk', 'cheese', 'butter', 'cream', 'yogurt', 'whey', 'casein', 
+                    'lactose', 'cream cheese', 'sour cream', 'ice cream', 'gelato',
+                    'mozzarella', 'parmesan', 'cheddar', 'ricotta', 'feta', 'mascarpone',
+                    'cottage cheese', 'greek yogurt', 'milkshake', 'dairy', 'whipped cream'],
+            
+            'eggs': ['egg', 'eggs', 'mayonnaise', 'mayo'],
+            
+            'fish': ['fish', 'salmon', 'tuna', 'cod', 'bass', 'sardines', 'mackerel',
+                    'anchovy', 'herring', 'trout', 'halibut', 'catfish'],
+            
+            'shellfish': ['shrimp', 'crab', 'lobster', 'prawns', 'crayfish', 'mussels',
+                         'oyster', 'clams', 'scallops', 'seafood'],
+            
+            'tree nuts': ['nuts', 'almonds', 'walnuts', 'cashews', 'pecans', 'pistachios',
+                         'hazelnuts', 'macadamia', 'pine nuts', 'chestnuts'],
+            
+            'peanuts': ['peanuts', 'peanut butter', 'peanut oil'],
+            
+            'wheat': ['wheat', 'flour', 'bread', 'pasta', 'noodles', 'couscous',
+                     'crackers', 'bagel', 'croissant', 'pita', 'tortilla',
+                     'whole wheat bread', 'white bread', 'pancakes', 'waffles',
+                     'cake', 'cookie', 'brownie', 'muffin', 'donut', 'pastry',
+                     'white toast', 'french toast'],
+            
+            'soybeans': ['soy', 'soy sauce', 'tofu', 'tempeh', 'edamame', 'miso', 'soybeans'],
+            
+            'sesame': ['sesame', 'tahini', 'sesame oil', 'sesame seeds'],
+            
+            # Other Common Allergens
+            'gluten': ['wheat', 'flour', 'bread', 'pasta', 'rye', 'barley', 'oats',
+                      'noodles', 'couscous', 'seitan', 'crackers', 'bagel', 'pancakes'],
+            
+            'corn': ['corn', 'corn syrup', 'popcorn', 'corn oil', 'cornmeal', 'polenta'],
+            
+            'sulfites': ['wine', 'dried fruit', 'vinegar'],
+            
+            'mustard': ['mustard', 'mustard seeds', 'mustard oil'],
+        }
+        
+        # Allergen severity/commonality (for display purposes)
+        self.allergen_info = {
+            'milk': {'severity': 'high', 'emoji': '🥛', 'description': 'Dairy/Lactose'},
+            'eggs': {'severity': 'high', 'emoji': '🥚', 'description': 'Eggs'},
+            'fish': {'severity': 'medium', 'emoji': '🐟', 'description': 'Fish'},
+            'shellfish': {'severity': 'high', 'emoji': '🦐', 'description': 'Shellfish/Crustaceans'},
+            'tree nuts': {'severity': 'high', 'emoji': '🌰', 'description': 'Tree Nuts'},
+            'peanuts': {'severity': 'high', 'emoji': '🥜', 'description': 'Peanuts'},
+            'wheat': {'severity': 'medium', 'emoji': '🌾', 'description': 'Wheat'},
+            'soybeans': {'severity': 'medium', 'emoji': '🫘', 'description': 'Soy'},
+            'sesame': {'severity': 'medium', 'emoji': '🫘', 'description': 'Sesame'},
+            'gluten': {'severity': 'medium', 'emoji': '🌾', 'description': 'Gluten'},
+            'corn': {'severity': 'low', 'emoji': '🌽', 'description': 'Corn'},
+            'sulfites': {'severity': 'low', 'emoji': '🍷', 'description': 'Sulfites'},
+            'mustard': {'severity': 'low', 'emoji': '🌭', 'description': 'Mustard'},
+        }
+        
     @st.cache_resource
     def build_vit_model(_self):
         """Build ViT model for prepared dishes"""
@@ -288,6 +347,65 @@ class HybridFoodAnalyzer:
         
         # Step 3: Default to neutral if unknown
         return 6
+    
+    def detect_allergens(self, ingredients_list):
+        """
+        Detect allergens in a list of ingredients
+        Returns a dictionary of detected allergens with matching ingredients
+        """
+        detected_allergens = {}
+        
+        for ingredient in ingredients_list:
+            ingredient_lower = ingredient.lower().strip()
+            
+            # Check against each allergen category
+            for allergen_name, allergen_items in self.allergens.items():
+                for allergen_item in allergen_items:
+                    # Check for matches (exact or partial)
+                    if allergen_item in ingredient_lower or ingredient_lower in allergen_item:
+                        if allergen_name not in detected_allergens:
+                            detected_allergens[allergen_name] = []
+                        # Add ingredient to this allergen category if not already added
+                        if ingredient not in detected_allergens[allergen_name]:
+                            detected_allergens[allergen_name].append(ingredient)
+                        break  # Don't check other items for this allergen
+        
+        return detected_allergens
+    
+    def get_allergen_summary(self, detected_allergens):
+        """
+        Create a formatted summary of detected allergens
+        """
+        if not detected_allergens:
+            return None
+        
+        summary = {
+            'total_count': len(detected_allergens),
+            'allergens': []
+        }
+        
+        # Sort by severity (high first) and then alphabetically
+        severity_order = {'high': 0, 'medium': 1, 'low': 2}
+        
+        for allergen_name in detected_allergens.keys():
+            allergen_data = self.allergen_info.get(allergen_name, {
+                'severity': 'medium',
+                'emoji': '⚠️',
+                'description': allergen_name.title()
+            })
+            
+            summary['allergens'].append({
+                'name': allergen_name,
+                'emoji': allergen_data['emoji'],
+                'description': allergen_data['description'],
+                'severity': allergen_data['severity'],
+                'ingredients': detected_allergens[allergen_name]
+            })
+        
+        # Sort by severity
+        summary['allergens'].sort(key=lambda x: (severity_order.get(x['severity'], 1), x['name']))
+        
+        return summary
     
     def get_health_category(self, score):
         """Convert score to category"""
@@ -702,6 +820,21 @@ def main():
         """)
         
         st.markdown("---")
+        st.markdown("### ⚠️ Allergen Detection")
+        st.markdown("""
+        Automatically detects:
+        - 🥛 Dairy/Milk
+        - 🥚 Eggs
+        - 🐟 Fish
+        - 🦐 Shellfish
+        - 🌰 Tree Nuts
+        - 🥜 Peanuts
+        - 🌾 Wheat/Gluten
+        - 🫘 Soy
+        - And more!
+        """)
+        
+        st.markdown("---")
         if st.button("🗑️ Clear Learning Data"):
             if os.path.exists(USER_CORRECTIONS_FILE):
                 os.remove(USER_CORRECTIONS_FILE)
@@ -961,6 +1094,41 @@ def main():
                 else:
                     st.warning("⚠️ This dish contains ingredients to consume in moderation.")
             
+            # Allergen Detection for Recipe Ingredients
+            detected_allergens = analyzer.detect_allergens(ingredients_list)
+            allergen_summary = analyzer.get_allergen_summary(detected_allergens)
+            
+            if allergen_summary:
+                st.markdown("---")
+                st.subheader(f"⚠️ Allergen Warning ({allergen_summary['total_count']} detected)")
+                
+                st.warning("**This dish may contain the following allergens:**")
+                
+                # Group by severity
+                high_severity = [a for a in allergen_summary['allergens'] if a['severity'] == 'high']
+                medium_severity = [a for a in allergen_summary['allergens'] if a['severity'] == 'medium']
+                low_severity = [a for a in allergen_summary['allergens'] if a['severity'] == 'low']
+                
+                if high_severity:
+                    st.markdown("**🔴 High Priority Allergens (Major):**")
+                    for allergen in high_severity:
+                        ingredients_str = ", ".join([ing.title() for ing in allergen['ingredients']])
+                        st.write(f"• {allergen['emoji']} **{allergen['description']}**: {ingredients_str}")
+                
+                if medium_severity:
+                    st.markdown("**🟡 Medium Priority Allergens:**")
+                    for allergen in medium_severity:
+                        ingredients_str = ", ".join([ing.title() for ing in allergen['ingredients']])
+                        st.write(f"• {allergen['emoji']} **{allergen['description']}**: {ingredients_str}")
+                
+                if low_severity:
+                    with st.expander("🟢 Low Priority Allergens (Click to expand)"):
+                        for allergen in low_severity:
+                            ingredients_str = ", ".join([ing.title() for ing in allergen['ingredients']])
+                            st.write(f"• {allergen['emoji']} **{allergen['description']}**: {ingredients_str}")
+                
+                st.info("💡 **Note:** This is an automated detection based on ingredient names. Always verify with the manufacturer or restaurant for accurate allergen information.")
+            
             st.markdown("---")
         
         # Try to get USDA nutritional data
@@ -1019,6 +1187,41 @@ def main():
                     st.info("ℹ️ This dish has a balanced mix of ingredients.")
                 else:
                     st.warning("⚠️ This dish contains ingredients to consume in moderation.")
+            
+            # Allergen Detection for USDA Ingredients
+            detected_allergens = analyzer.detect_allergens(ingredients_list)
+            allergen_summary = analyzer.get_allergen_summary(detected_allergens)
+            
+            if allergen_summary:
+                st.markdown("---")
+                st.subheader(f"⚠️ Allergen Warning ({allergen_summary['total_count']} detected)")
+                
+                st.warning("**This product may contain the following allergens:**")
+                
+                # Group by severity
+                high_severity = [a for a in allergen_summary['allergens'] if a['severity'] == 'high']
+                medium_severity = [a for a in allergen_summary['allergens'] if a['severity'] == 'medium']
+                low_severity = [a for a in allergen_summary['allergens'] if a['severity'] == 'low']
+                
+                if high_severity:
+                    st.markdown("**🔴 High Priority Allergens (Major):**")
+                    for allergen in high_severity:
+                        ingredients_str = ", ".join([ing.title() for ing in allergen['ingredients']])
+                        st.write(f"• {allergen['emoji']} **{allergen['description']}**: {ingredients_str}")
+                
+                if medium_severity:
+                    st.markdown("**🟡 Medium Priority Allergens:**")
+                    for allergen in medium_severity:
+                        ingredients_str = ", ".join([ing.title() for ing in allergen['ingredients']])
+                        st.write(f"• {allergen['emoji']} **{allergen['description']}**: {ingredients_str}")
+                
+                if low_severity:
+                    with st.expander("🟢 Low Priority Allergens (Click to expand)"):
+                        for allergen in low_severity:
+                            ingredients_str = ", ".join([ing.title() for ing in allergen['ingredients']])
+                            st.write(f"• {allergen['emoji']} **{allergen['description']}**: {ingredients_str}")
+                
+                st.info("💡 **Note:** This is an automated detection based on ingredient names. Always verify with the manufacturer for accurate allergen information.")
             
             st.markdown("---")
         
