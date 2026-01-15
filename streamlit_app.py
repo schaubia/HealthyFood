@@ -46,21 +46,19 @@ class HybridFoodAnalyzer:
         # Enhanced health categorization with point system (1-10)
         self.health_scores = {
             # Very Healthy Foods (8-10 points)
-            'vegetables': 9, 'broccoli': 10, 'spinach': 10, 'kale': 10, 'carrot': 9,
-            'tomato': 9, 'lettuce': 9, 'cucumber': 9, 'bell pepper': 9, 'zucchini': 9,
-            'cauliflower': 9, 'brussels sprouts': 9, 'asparagus': 9, 'celery': 9,
-            'onion': 8, 'garlic': 9, 'ginger': 8,
-            'fruits': 8, 'apple': 9, 'banana': 8, 'orange': 9, 'berries': 10,
-            'strawberry': 9, 'blueberry': 10, 'raspberry': 9, 'watermelon': 9,
-            'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9,
+            'vegetables': 9, 'broccoli': 10, 'spinach': 10, 'kale': 10, 'beet': 9, 'beetroot': 9,
+            'carrot': 9, 'tomato': 9, 'lettuce': 9, 'cucumber': 9, 'bell pepper': 9, 
+            'zucchini': 9,'cauliflower': 9, 'brussels sprouts': 9, 'asparagus': 9, 'celery': 9,
+            'onion': 8, 'garlic': 9, 'ginger': 8, 'fruits': 8, 'apple': 9, 'banana': 8, 
+            'orange': 9, 'berries': 10, 'strawberry': 9, 'blueberry': 10, 'raspberry': 9, 
+            'watermelon': 9, 'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9,
             'salmon': 9, 'tuna': 8, 'sardines': 9, 'mackerel': 9, 'fish': 8,
             'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7, 'seafood': 7,
             'chicken breast': 8, 'turkey': 8, 'lean meat': 8, 'chicken': 7,
             'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
             'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
-            'greek yogurt': 8, 'cottage cheese': 8, 'tempeh': 8,
-            'edamame': 9, 'hummus': 8, 'salad': 9,
-            'seaweed': 9, 'herbs': 8, 'basil': 8, 'parsley': 8, 'cilantro': 8,
+            'greek yogurt': 8, 'cottage cheese': 8, 'tempeh': 8, 'edamame': 9, 'hummus': 8, 
+            'salad': 9,'seaweed': 9, 'herbs': 8, 'basil': 8, 'parsley': 8, 'cilantro': 8,
             'lime': 8, 'lemon': 8, 'mushroom': 9, 'peppers': 9, 'ginger': 8,
             
             # Moderately Healthy/Neutral Foods (5-7 points)
@@ -81,7 +79,7 @@ class HybridFoodAnalyzer:
             'flour': 5, 'wheat': 6, 'water': 7, 'broth': 6,
             'soy sauce': 5, 'ketchup': 4, 'mayo': 4, 'mayonnaise': 4,
             'salsa': 6, 'sauce': 5, 'marinara': 6, 'pesto': 6,
-            'mozzarella': 6, 'parmesan': 6, 'ricotta': 6, 'feta': 6, 'cheddar': 5,
+            'mozzarella': 6, 'parmesan': 6, 'ricotta': 6, 'feta': 5, 'cheddar': 5,
             'cream cheese': 5, 'sour cream': 5, 'mascarpone': 5,
             'cocoa': 6, 'chocolate': 5, 'vanilla': 6, 'coffee': 6,
             'baking powder': 6, 'baking soda': 6,'tofu': 5,
