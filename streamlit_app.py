@@ -957,35 +957,7 @@ def main():
         
         st.markdown("---")
         
-        # Health Score Section
-        score = analyzer.get_health_score(top_food)
-        category, emoji, color = analyzer.get_health_category(score)
-        advice = analyzer.get_health_advice(score, top_food)
-        
-        # Score visualization
-        col1, col2, col3 = st.columns([1, 2, 1])
-        
-        with col1:
-            st.markdown(f"### {emoji}")
-        
-        with col2:
-            st.markdown(f"### Health Score: **{score}/10**")
-            st.progress(score / 10)
-            st.markdown(f"**Category:** {category}")
-        
-        with col3:
-            if score >= 8:
-                st.success("Excellent!")
-            elif score >= 5:
-                st.warning("Moderate")
-            else:
-                st.error("Limit Intake")
-        
-        st.info(advice)
-        
-        st.markdown("---")
-        
-        # Feedback Section
+        # Feedback Section (moved before health score)
         st.subheader("💬 Is this prediction correct?")
         
         feedback_col1, feedback_col2 = st.columns(2)
@@ -1031,6 +1003,34 @@ def main():
                     st.session_state.show_correction_form = False
                     time.sleep(2)
                     st.rerun()
+        
+        st.markdown("---")
+        
+        # Health Score Section (moved after feedback)
+        score = analyzer.get_health_score(top_food)
+        category, emoji, color = analyzer.get_health_category(score)
+        advice = analyzer.get_health_advice(score, top_food)
+        
+        # Score visualization
+        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        with col1:
+            st.markdown(f"### {emoji}")
+        
+        with col2:
+            st.markdown(f"### Health Score: **{score}/10**")
+            st.progress(score / 10)
+            st.markdown(f"**Category:** {category}")
+        
+        with col3:
+            if score >= 8:
+                st.success("Excellent!")
+            elif score >= 5:
+                st.warning("Moderate")
+            else:
+                st.error("Limit Intake")
+        
+        st.info(advice)
         
         st.markdown("---")
         
