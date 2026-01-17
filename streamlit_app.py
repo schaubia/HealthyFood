@@ -527,6 +527,7 @@ class HybridFoodAnalyzer:
             'pancake': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
             'waffle': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
             'french toast': ['bread', 'eggs', 'milk', 'sugar', 'cinnamon', 'butter'],
+            'banitsa': ['phyllo dough', 'eggs', 'cheese', 'soda', 'butter'],
             
             # Italian
             'pizza': ['flour', 'yeast', 'tomato', 'mozzarella', 'olive oil', 'basil'],
