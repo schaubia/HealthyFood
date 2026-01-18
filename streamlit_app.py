@@ -95,7 +95,7 @@ class HybridFoodAnalyzer:
             'candy': 1,  'soda': 1, 'energy drink': 1, 'sports drink': 2,
             'baking powder': 3, 'baking soda': 3,'tofu': 3, 'mayo': 4, 'mayonnaise': 4,
             'bacon': 3, 'pepperoni': 2, 'salami': 2, 'hot wings': 3,
-            'fried': 2, 'deep fried': 2, 'battered': 2, 'breaded': 3,
+            'fried': 2, 'deep fried': 2, 'battered': 2, 'breaded': 3, 'breadcrumbs': 3,
             'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
             'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4,
             'ramen': 4, 'instant noodles': 3, 'cup noodles': 3,
