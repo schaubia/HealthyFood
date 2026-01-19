@@ -74,7 +74,7 @@ class HybridFoodAnalyzer:
             'soup': 6, 'stew': 6, 'curry': 6, 'chili': 5, 'pickles': 5,
             'sandwich': 5, 'wrap': 5, 'taco': 5, 'burrito': 5,
             'sushi': 7, 'maki': 7, 'nigiri': 7, 'mustard': 5, 'cinnamon': 7, 
-            'smoothie': 7, 'protein shake': 7, 'juice': 6,
+            'smoothie': 7, 'protein shake': 6, 'juice': 6,
             'granola': 6, 'cereal': 6, 'muesli': 7, 'bagel': 5,
             'tortilla': 6, 'pita': 6, 'crackers': 5, 'vinegar': 7, 
             'salt': 5, 'pepper': 7, 'spices': 7, 'yeast': 6,
@@ -84,7 +84,7 @@ class HybridFoodAnalyzer:
             'cream cheese': 5, 'sour cream': 5, 'mascarpone': 5, 'burrata': 5,
             'cocoa': 6, 'chocolate': 5, 'vanilla': 6, 'coffee': 6,
             'rice paper': 6, 'seitan': 7, 'chickpea': 9,'milkshake': 5,
-            'chocolate bar': 5,  'gelato': 5, 'pancakes': 5,
+            'chocolate bar': 5,  'gelato': 5, 'pancakes': 5,'pancake': 5,
             
             # Unhealthy Foods (1-4 points)
             'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,
@@ -99,7 +99,7 @@ class HybridFoodAnalyzer:
             'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
             'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4,
             'ramen': 4, 'instant noodles': 3, 'cup noodles': 3,
-            'white bread': 4, 'white toast': 3,  'waffles': 4, 'ice cream': 4,
+            'white bread': 4, 'white toast': 3,  'waffles': 4, 'waffle': 4,'ice cream': 4,
             'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
         }
         
@@ -113,14 +113,16 @@ class HybridFoodAnalyzer:
             
             'eggs': ['egg', 'eggs', 'mayonnaise', 'mayo'],
             
-            'fish': ['fish', 'salmon', 'tuna', 'cod', 'bass', 'sardines', 'mackerel',
+            'fish': ['fish', 'salmon', 'tuna', 'cod', 'bass', 'sardines', 'sardine','mackerel',
                     'anchovy', 'herring', 'trout', 'halibut', 'catfish'],
             
             'shellfish': ['shrimp', 'crab', 'lobster', 'prawns', 'crayfish', 'mussels',
-                         'oyster', 'clams', 'scallops', 'seafood'],
+                         'oyster', 'clams', 'scallops', 'prawn', 'mussel', 'seafood'],
             
             'tree nuts': ['nuts', 'almonds', 'walnuts', 'cashews', 'pecans', 'pistachios',
-                         'hazelnuts', 'macadamia', 'pine nuts', 'chestnuts'],
+                         'hazelnuts', 'macadamia', 'pine nuts', 'chestnuts', 'nut', 
+                         'almond', 'walnut', 'cashew', 'pecan', 'pistachio',
+                         'hazelnut', 'pine nut', 'chestnut'],
             
             'peanuts': ['peanuts', 'peanut butter', 'peanut oil'],
             
@@ -136,7 +138,7 @@ class HybridFoodAnalyzer:
             
             # Other Common Allergens
             'gluten': ['wheat', 'flour', 'bread', 'pasta', 'rye', 'barley', 'oats',
-                      'noodles', 'couscous', 'seitan', 'crackers', 'bagel', 'pancakes'],
+                      'noodles', 'couscous', 'seitan', 'cracker', 'crackers', 'bagel', 'pancakes', 'pancake'],
             
             'corn': ['corn', 'corn syrup', 'popcorn', 'corn oil', 'cornmeal', 'polenta'],
             
