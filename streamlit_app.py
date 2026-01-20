@@ -582,6 +582,8 @@ class HybridFoodAnalyzer:
             'chicken soup': ['chicken', 'broth', 'carrot', 'celery', 'onion', 'noodles'],
             'tomato soup': ['tomato', 'cream', 'onion', 'garlic', 'basil', 'butter'],
             'minestrone': ['pasta', 'beans', 'tomato', 'carrot', 'celery', 'onion'],
+            'mushroom soup': ['mushrooms', 'cream', 'garlic', 'onion', 'thyme', 'parsley'],
+            'goulash': ['beef', 'pepper', 'garlic', 'onion', 'tomato', 'cheddar', 'noodles'],
             
             # Meat dishes
             'steak': ['beef', 'salt', 'pepper', 'butter', 'garlic'],
