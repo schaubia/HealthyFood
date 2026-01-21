@@ -59,7 +59,7 @@ class HybridFoodAnalyzer:
             'chicken breast': 8, 'turkey': 8, 'lean meat': 8, 'chicken': 7,
             'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
             'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
-            'greek yogurt': 8, 'cottage cheese': 8, 'tempeh': 8, 'edamame': 9, 'hummus': 8, 
+            'greek yogurt': 8, 'cottage cheese': 8, 'white cheese': 8, 'tempeh': 8, 'edamame': 9, 'hummus': 8, 
             'seaweed': 9, 'herbs': 8, 'basil': 8, 'parsley': 8, 'cilantro': 8, 'dill':9, 
             'lime': 8, 'lemon': 8, 'mushroom': 9, 'peppers': 9, 'ginger': 8,
             
@@ -577,6 +577,7 @@ class HybridFoodAnalyzer:
             'caesar salad': ['lettuce', 'parmesan', 'croutons', 'caesar dressing', 'chicken'],
             'greek salad': ['lettuce', 'tomato', 'cucumber', 'feta', 'olives', 'olive oil'],
             'salad': ['lettuce', 'tomato', 'cucumber', 'onion', 'olive oil', 'vinegar'],
+            'shopska salad': ['tomato', 'cucumber', 'onion', 'pepper', 'white cheese', 'olive oil', 'vinegar'],
             
             # Soups
             'chicken soup': ['chicken', 'broth', 'carrot', 'celery', 'onion', 'noodles'],
