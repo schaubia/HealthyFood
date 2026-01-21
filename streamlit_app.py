@@ -90,7 +90,7 @@ class HybridFoodAnalyzer:
             'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,
             'french fries': 2, 'fries': 2, 'chips': 2, 'nachos': 3,
             'hot dog': 3, 'corn dog': 2, 'fried chicken': 3, 'ketchup': 3, 
-            'doughnut': 2, 'donut': 2, 'pastry': 3, 'croissant': 4,
+            'doughnut': 2, 'donut': 2, 'pastry': 3, 'croissant': 4, 'popcorn': 4,
             'cake': 3, 'cupcake': 2, 'brownie': 3, 'cookie': 4, 'cookies': 4,
             'candy': 1,  'soda': 1, 'energy drink': 1, 'sports drink': 2,
             'baking powder': 3, 'baking soda': 3,'tofu': 3, 'mayo': 4, 'mayonnaise': 4,
