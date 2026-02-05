@@ -61,7 +61,7 @@ class HybridFoodAnalyzer:
             'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
             'greek yogurt': 8, 'cottage cheese': 8, 'white cheese': 8, 'tempeh': 8, 'edamame': 9, 'hummus': 8, 
             'seaweed': 9, 'herbs': 8, 'basil': 8, 'parsley': 8, 'cilantro': 8, 'dill':9, 
-            'lime': 8, 'lemon': 8, 'mushroom': 9, 'peppers': 9, 'ginger': 8,
+            'lime': 8, 'lemon': 8, 'mushroom': 9, 'fungi':9, 'peppers': 9, 'ginger': 8,
             
             # Moderately Healthy/Neutral Foods (5-7 points)
             'pasta': 6, 'white rice': 6, 'bread': 6, 'whole wheat bread': 6,
