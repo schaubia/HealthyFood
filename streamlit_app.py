@@ -123,7 +123,7 @@ class HybridFoodAnalyzer:
             'vegetables': 9, 'broccoli': 10, 'spinach': 10, 'kale': 10, 'beet': 9, 'beetroot': 9,
             'carrot': 9, 'tomato': 9, 'lettuce': 9, 'cucumber': 9, 'bell pepper': 9, 
             'zucchini': 9,'cauliflower': 9, 'brussels sprouts': 9, 'asparagus': 9, 'celery': 9,
-            'onion': 8, 'garlic': 9, 'ginger': 8, 'fruits': 8, 'apple': 10, 'banana': 8, 
+            'onion': 8, 'garlic': 9, 'ginger': 8, 'fruits': 8, 'fruit': 8,'apple': 10, 'banana': 8, 
             'orange': 9, 'berries': 10, 'strawberry': 10, 'blueberry': 10, 'raspberry': 10, 
             'cherry':10,  'strawberries': 10, 'blueberries': 10, 'raspberries': 10,
             'peach':9,  'quince':10, 'nectarine':9, 'apricot':9, 'medlar':9, 'melon':9, 
@@ -831,6 +831,8 @@ class HybridFoodAnalyzer:
             'greek salad': ['lettuce', 'tomato', 'cucumber', 'feta', 'olives', 'olive oil'],
             'salad': ['lettuce', 'tomato', 'cucumber', 'onion', 'olive oil', 'vinegar'],
             'shopska salad': ['tomato', 'cucumber', 'onion', 'pepper', 'white cheese', 'olive oil', 'vinegar'],
+            'vitamine salad': ['beet', 'carrot', 'apple', 'кohlrabi', 'olive oil'],
+            'potato salad': ['mashed potatoes', 'celery', 'onion', 'eggs', 'olive oil'],
             
             # Soups
             'chicken soup': ['chicken', 'broth', 'carrot', 'celery', 'onion', 'noodles'],
