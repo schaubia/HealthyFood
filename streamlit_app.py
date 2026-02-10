@@ -155,7 +155,7 @@ class HybridFoodAnalyzer:
             'salt': 5, 'pepper': 7, 'spices': 7, 'yeast': 6,
             'flour': 5, 'wheat': 6, 'water': 7, 'broth': 6,
             'soy sauce': 5, 'salsa': 6, 'sauce': 5, 'marinara': 6, 'pesto': 6,
-            'mozzarella': 6, 'parmesan': 6, 'ricotta': 6, 'feta': 5, 'cheddar': 5,
+            'mozzarella': 6, 'parmesan': 6, 'ricotta': 6, 'cheddar': 5,
             'cream cheese': 5, 'sour cream': 5, 'mascarpone': 5, 'burrata': 5,
             'cocoa': 6, 'chocolate': 5, 'vanilla': 6, 'coffee': 6,
             'rice paper': 6, 'seitan': 7, 'chickpea': 9,'milkshake': 5,
@@ -163,7 +163,7 @@ class HybridFoodAnalyzer:
             
             # Unhealthy Foods (1-4 points)
             'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,
-            'french fries': 2, 'fries': 2, 'chips': 2, 'nachos': 3,
+            'french fries': 2, 'fries': 2, 'chips': 2, 'nachos': 3, 'feta': 4, 
             'hot dog': 3, 'corn dog': 2, 'fried chicken': 3, 'ketchup': 3, 
             'doughnut': 2, 'donut': 2, 'pastry': 3, 'croissant': 4, 'popcorn': 4,
             'cake': 3, 'cupcake': 2, 'brownie': 3, 'cookie': 4, 'cookies': 4,
