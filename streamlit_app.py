@@ -553,9 +553,9 @@ class HybridFoodAnalyzer:
         elif score >= 6:
             return f"{emoji} **Fair option.** {food_name.title()} is neutral - not particularly healthy or unhealthy. Balance it with more nutritious foods throughout the day."
         elif score >= 5:
-            return f"🟠 **Consume mindfully.** {food_name.title()} should be eaten in moderation. Try to pair it with healthier options and be aware of portion sizes."
+            return f"🟡 **Consume mindfully.** {food_name.title()} should be eaten in moderation. Try to pair it with healthier options and be aware of portion sizes."
         elif score >= 3:
-            return f"🔴 **Occasional treat only.** {food_name.title()} is high in calories, fats, or sugars. Enjoy it rarely and in small portions as part of an otherwise healthy diet."
+            return f"🟠 **Occasional treat only.** {food_name.title()} is high in calories, fats, or sugars. Enjoy it rarely and in small portions as part of an otherwise healthy diet."
         else:
             return f"🔴 **Limit intake.** {food_name.title()} is very unhealthy and should be avoided or consumed very rarely. Consider healthier alternatives whenever possible."
     
