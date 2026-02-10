@@ -783,6 +783,9 @@ class HybridFoodAnalyzer:
             'waffle': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
             'french toast': ['bread', 'eggs', 'milk', 'sugar', 'cinnamon', 'butter'],
             'banitsa': ['phyllo dough', 'eggs', 'cheese', 'soda', 'butter'],
+            'croissant': ['flour', 'butter', 'yeast', 'sugar', 'milk', 'eggs'],
+            'bagel': ['flour', 'yeast', 'salt', 'sugar', 'water'],
+            'muffin': ['flour', 'sugar', 'eggs', 'milk', 'butter', 'baking powder'],
             
             # Italian
             'pizza': ['flour', 'yeast', 'tomato', 'mozzarella', 'olive oil', 'basil'],
@@ -845,12 +848,8 @@ class HybridFoodAnalyzer:
             'steak': ['beef', 'salt', 'pepper', 'butter', 'garlic'],
             'chicken breast': ['chicken', 'salt', 'pepper', 'oil', 'herbs'],
             'pork chop': ['pork', 'salt', 'pepper', 'oil', 'garlic'],
-            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter'],
+            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter']
             
-            # More breakfast
-            'croissant': ['flour', 'butter', 'yeast', 'sugar', 'milk', 'eggs'],
-            'bagel': ['flour', 'yeast', 'salt', 'sugar', 'water'],
-            'muffin': ['flour', 'sugar', 'eggs', 'milk', 'butter', 'baking powder']
         }
         
         # Try exact match
