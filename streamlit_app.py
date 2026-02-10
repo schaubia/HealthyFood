@@ -812,7 +812,7 @@ class HybridFoodAnalyzer:
             'tacos': ['tortilla', 'beef', 'lettuce', 'cheese', 'tomato', 'salsa'],
             'burrito': ['tortilla', 'rice', 'beans', 'meat', 'cheese', 'salsa'],
             'quesadilla': ['tortilla', 'cheese', 'chicken', 'peppers', 'onion'],
-            'nachos': ['tortilla chips', 'cheese', 'beans', 'salsa', 'sour cream', 'jalapeño'],
+            'nachos': ['tortilla chips', 'cheese', 'beans', 'salsa', 'sour cream', 'jalapeno'],
             
             # Desserts
             'cake': ['flour', 'sugar', 'eggs', 'butter', 'milk', 'baking powder'],
