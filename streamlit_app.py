@@ -126,7 +126,7 @@ class HybridFoodAnalyzer:
             'onion': 8, 'garlic': 9, 'ginger': 8, 'fruits': 8, 'fruit': 8,'apple': 10, 'banana': 8, 
             'orange': 9, 'berries': 10, 'strawberry': 10, 'blueberry': 10, 'raspberry': 10, 
             'cherry':10,  'strawberries': 10, 'blueberries': 10, 'raspberries': 10,
-            'peach':9,  'quince':10, 'nectarine':9, 'apricot':9, 'medlar':9, 'melon':9, 
+            'peach':9,  'quince':10, 'nectarine':9, 'apricot':9, 'medlar':9, 'melon':9, "persimmon":9,
             'watermelon': 9, 'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9,
             'salmon': 8, 'tuna': 8, 'sardines': 9, 'mackerel': 9, 'fish': 8, 'kohlrabi':10, 
             'turnip':9, 'artichoke':10, 'salad': 9, 'arugula':9, 'rocket salad':9, 'rumex':10, 
