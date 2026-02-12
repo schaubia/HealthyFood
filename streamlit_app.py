@@ -153,11 +153,10 @@ class HybridFoodAnalyzer:
             'soup': 6, 'stew': 6, 'curry': 6, 'chili': 5, 'pickles': 5,
             'sandwich': 5, 'wrap': 5, 'taco': 5, 'burrito': 5,
             'sushi': 7, 'maki': 7, 'nigiri': 7, 'mustard': 5, 'cinnamon': 7, 
-            'smoothie': 7, 'protein shake': 6, 'juice': 6,
-            'granola': 6, 'cereal': 6, 'muesli': 7, 'bagel': 5,
-            'tortilla': 6, 'pita': 6, 'crackers': 5, 'vinegar': 7, 
-            'salt': 5, 'pepper': 7, 'spices': 7, 'yeast': 6,
-            'flour': 5, 'wheat': 6, 'water': 7, 'broth': 6,
+            'smoothie': 7, 'protein shake': 6, 'juice': 6, 'granola': 6, 
+            'cereal': 6, 'muesli': 7, 'bagel': 5, 'tortilla': 6, 'pita': 6, 
+            'crackers': 5, 'vinegar': 7,  'salt': 5, 'pepper': 7, 'spices': 7, 
+            'yeast': 6, 'flour': 5, 'wheat': 6, 'water': 7, 'broth': 6,
             'soy sauce': 5, 'salsa': 6, 'sauce': 5, 'marinara': 6, 'pesto': 6,
             'mozzarella': 6, 'parmesan': 6, 'ricotta': 6, 'cheddar': 5,
             'cream cheese': 5, 'sour cream': 5, 'mascarpone': 5, 'burrata': 5,
@@ -176,9 +175,8 @@ class HybridFoodAnalyzer:
             'bacon': 3, 'pepperoni': 2, 'salami': 2, 'hot wings': 3,
             'fried': 2, 'deep fried': 2, 'battered': 2, 'breaded': 3, 'breadcrumbs': 3,
             'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
-            'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4,
-            'ramen': 4, 'instant noodles': 3, 'cup noodles': 3,
-            'white bread': 4, 'white toast': 3,  'waffles': 4, 'waffle': 4,'ice cream': 4,
+            'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4, 'ramen': 4, 'instant noodles': 3,
+            'cup noodles': 3, 'white bread': 4, 'white toast': 3,  'waffles': 4, 'waffle': 4,'ice cream': 4,
             'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
         }
         
