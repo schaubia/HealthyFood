@@ -121,17 +121,64 @@ class HybridFoodAnalyzer:
         # PHASE 2: Track model usage statistics
         self._model_usage = {'vit_only': 0, 'resnet_only': 0, 'both': 0}
         
-        # PHASE 3: Tiny fallback list — only foods the USDA API handles poorly.
-        # All other foods are scored AUTOMATICALLY from real nutrition data.
+        # Enhanced health categorization with point system (1-10)
         self.health_scores = {
-            'water': 10,
-            'soda': 1, 'cola': 1, 'energy drink': 1, 'candy': 1,
-            'deep fried': 2, 'chips': 2, 'french fries': 2,
+            # Very Healthy Foods (8-10 points)
+            'vegetables': 9, 'broccoli': 10, 'spinach': 10, 'kale': 10, 'beet': 9, 'beetroot': 9,
+            'carrot': 9, 'tomato': 9, 'lettuce': 9, 'cucumber': 9, 'bell pepper': 9, 
+            'zucchini': 9,'cauliflower': 9, 'brussels sprouts': 9, 'asparagus': 9, 'celery': 9,
+            'onion': 8, 'garlic': 9, 'ginger': 8, 'fruits': 8, 'fruit': 8,'apple': 10, 'banana': 8, 
+            'orange': 9, 'berries': 10, 'strawberry': 10, 'blueberry': 10, 'raspberry': 10, 
+            'cherry':10,  'strawberries': 10, 'blueberries': 10, 'raspberries': 10,
+            'peach':9,  'quince':10, 'nectarine':9, 'apricot':9, 'medlar':9, 'melon':9, "persimmon":9,
+            'watermelon': 9, 'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9,
+            'salmon': 8, 'tuna': 8, 'sardines': 9, 'mackerel': 9, 'fish': 8, 'kohlrabi':10, 
+            'turnip':9, 'artichoke':10, 'salad': 9, 'arugula':9, 'rocket salad':9, 'rumex':10, 
+            'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7, 'seafood': 7,
+            'chicken breast': 8, 'turkey': 8, 'lean meat': 8, 'chicken': 7,
+            'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
+            'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
+            'greek yogurt': 8, 'cottage cheese': 8, 'white cheese': 8, 'tempeh': 8, 'edamame': 9, 'hummus': 8, 
+            'seaweed': 9, 'herbs': 8, 'basil': 8, 'parsley': 8, 'cilantro': 8, 'dill':9, 
+            'lime': 8, 'lemon': 8, 'mushroom': 9, 'fungi':9, 'peppers': 9,
+            
+            # Moderately Healthy/Neutral Foods (5-7 points)
+            'pasta': 6, 'white rice': 6, 'bread': 6, 'whole wheat bread': 6,
+            'rice': 6, 'noodles': 6, 'couscous': 6, 'polenta': 6,
+            'potato': 6, 'sweet potato': 7, 'corn': 5, 'peas': 7,
+            'egg': 7, 'eggs': 7, 'cheese': 6, 'milk': 7, 'yogurt': 7,
+            'peanut butter': 6, 'honey': 6, 'dark chocolate': 7, 'peanuts': 6,
+            'olive oil': 7, 'coconut oil': 6, 'butter': 5, 'oil': 5, 'cream': 5,
+            'pork': 6, 'beef': 6, 'lamb': 6, 'sausage': 5, 'meat': 6,
+            'soup': 6, 'stew': 6, 'curry': 6, 'chili': 5, 'pickles': 5,
+            'sandwich': 5, 'wrap': 5, 'taco': 5, 'burrito': 5,
+            'sushi': 7, 'maki': 7, 'nigiri': 7, 'mustard': 5, 'cinnamon': 7, 
+            'smoothie': 7, 'protein shake': 6, 'juice': 6, 'granola': 6, 
+            'cereal': 6, 'muesli': 7, 'bagel': 5, 'tortilla': 6, 'pita': 6, 
+            'crackers': 5, 'vinegar': 7,  'salt': 5, 'pepper': 7, 'spices': 7, 
+            'yeast': 6, 'flour': 5, 'wheat': 6, 'water': 7, 'broth': 6,
+            'soy sauce': 5, 'salsa': 6, 'sauce': 5, 'marinara': 6, 'pesto': 6,
+            'mozzarella': 6, 'parmesan': 6, 'ricotta': 6, 'cheddar': 5,
+            'cream cheese': 5, 'sour cream': 5, 'mascarpone': 5, 'burrata': 5,
+            'cocoa': 6, 'chocolate': 5, 'vanilla': 6, 'coffee': 6,
+            'rice paper': 6, 'seitan': 7, 'chickpea': 9,'milkshake': 5,
+            'chocolate bar': 5,  'gelato': 5, 'pancakes': 5,'pancake': 5,
+            
+            # Unhealthy Foods (1-4 points)
+            'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,
+            'french fries': 2, 'fries': 2, 'chips': 2, 'nachos': 3, 'feta': 4, 
+            'hot dog': 3, 'corn dog': 2, 'fried chicken': 3, 'ketchup': 3, 
+            'doughnut': 2, 'donut': 2, 'pastry': 3, 'croissant': 4, 'popcorn': 4,
+            'cake': 3, 'cupcake': 2, 'brownie': 3, 'cookie': 4, 'cookies': 4,
+            'candy': 1,  'soda': 1, 'energy drink': 1, 'sports drink': 2,
+            'baking powder': 3, 'baking soda': 3,'tofu': 3, 'mayo': 4, 'mayonnaise': 4,
+            'bacon': 3, 'pepperoni': 2, 'salami': 2, 'hot wings': 3,
+            'fried': 2, 'deep fried': 2, 'battered': 2, 'breaded': 3, 'breadcrumbs': 3,
+            'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
+            'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4, 'ramen': 4, 'instant noodles': 3,
+            'cup noodles': 3, 'white bread': 4, 'white toast': 3,  'waffles': 4, 'waffle': 4,'ice cream': 4,
+            'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
         }
-
-        # PHASE 3: In-memory cache for auto-calculated scores so we never
-        # hit the USDA API twice for the same food within a session.
-        self._auto_score_cache = {}
         
         # PHASE 2: Build optimized health score index for O(1) lookups
         self.health_score_index = self._build_health_score_index()
@@ -566,112 +613,37 @@ class HybridFoodAnalyzer:
         return self._model_usage
     
     # ============================================
-    # PHASE 3: AUTOMATED HEALTH SCORE FROM USDA
+    # PHASE 2: OPTIMIZED HEALTH SCORE LOOKUP
     # ============================================
-
-    def calculate_score_from_nutrients(self, nutrients: dict) -> int:
+    
+    def get_health_score(self, food_name):
         """
-        Derive a 1-10 health score purely from USDA nutrient values.
-
-        Scoring logic (per 100 g):
-          Positive points
-            +2  protein  > 15 g   (high protein)
-            +1  protein  > 5 g    (some protein)
-            +2  fiber    > 5 g    (high fiber)
-            +1  fiber    > 2 g    (some fiber)
-            +1  calories < 100    (low energy density)
-
-          Negative points
-            -1  calories > 400
-            -2  calories > 600
-            -1  total fat > 20 g
-            -2  saturated fat > 10 g
-            -1  saturated fat > 5 g
-            -2  sugar    > 20 g
-            -1  sugar    > 10 g
-            -1  sodium   > 600 mg
-
-        Raw score is clamped to [-4, +6] then mapped to 1-10.
-        """
-        def get(fragment):
-            """Pull the first numeric value whose key contains fragment."""
-            for k, v in nutrients.items():
-                if fragment.lower() in k.lower():
-                    try:
-                        return float(str(v).split()[0])
-                    except (ValueError, IndexError):
-                        pass
-            return 0.0
-
-        calories     = get('energy') or get('calor')
-        protein      = get('protein')
-        total_fat    = get('total lipid') or get('total fat')
-        sat_fat      = get('saturated')
-        sugar        = get('sugar')
-        fiber        = get('fiber')
-        sodium       = get('sodium')
-
-        raw = 0
-
-        # ── positive contributions ──────────────────────────────────────
-        if protein > 15:  raw += 2
-        elif protein > 5: raw += 1
-        if fiber > 5:     raw += 2
-        elif fiber > 2:   raw += 1
-        if 0 < calories < 100: raw += 1
-
-        # ── negative contributions ──────────────────────────────────────
-        if calories > 600:    raw -= 2
-        elif calories > 400:  raw -= 1
-        if total_fat > 20:    raw -= 1
-        if sat_fat > 10:      raw -= 2
-        elif sat_fat > 5:     raw -= 1
-        if sugar > 20:        raw -= 2
-        elif sugar > 10:      raw -= 1
-        if sodium > 600:      raw -= 1
-
-        # ── map [-4 … +6] → [1 … 10] ───────────────────────────────────
-        raw = max(-4, min(6, raw))          # clamp
-        score = round(1 + (raw + 4) * 9 / 10)  # linear map
-        return max(1, min(10, score))
-
-    def get_health_score(self, food_name: str) -> int:
-        """
-        PHASE 3: Automated health score — no hardcoded values needed!
-
-        Priority order:
-          1. In-memory session cache  (instant)
-          2. Tiny fallback dict       (instant, covers edge cases)
-          3. USDA API → calculate from real nutrition data  (cached 24 h)
-          4. Fallback: 5 (neutral)
+        PHASE 2: Get health score with O(1) lookup (10x faster!)
+        
+        Uses pre-built index instead of searching through all foods.
+        Old: O(n) - searches 200+ foods every time
+        New: O(1) - instant hash table lookup
         """
         food_lower = food_name.lower().strip()
-
-        # 1. Session cache
-        if food_lower in self._auto_score_cache:
-            return self._auto_score_cache[food_lower]
-
-        # 2. Fallback dict (only a handful of entries now)
-        if food_lower in self.health_scores:
-            return self.health_scores[food_lower]
-        for key, score in self.health_scores.items():
-            if key in food_lower or food_lower in key:
-                return score
-
-        # 3. Calculate from USDA data
-        try:
-            nutrition = self.fetch_nutrition_data_cached(food_lower)
-            if nutrition and nutrition.get('nutrients'):
-                score = self.calculate_score_from_nutrients(nutrition['nutrients'])
-                self._auto_score_cache[food_lower] = score
-                logger.info(f"Auto-scored '{food_lower}': {score}/10 from USDA data")
-                return score
-        except Exception as e:
-            logger.warning(f"Auto-scoring failed for '{food_lower}': {e}")
-
-        # 4. Neutral fallback
-        logger.info(f"No score data for '{food_lower}', defaulting to 5")
-        return 5
+        
+        # Try exact match (O(1))
+        if food_lower in self.health_score_index['exact']:
+            return self.health_score_index['exact'][food_lower]
+        
+        # Try token match (O(k) where k = number of tokens in food name)
+        tokens = food_lower.split()
+        matches = []
+        for token in tokens:
+            if token in self.health_score_index['tokens']:
+                matches.extend(self.health_score_index['tokens'][token])
+        
+        if matches:
+            # Sort by length (most specific first)
+            matches.sort(key=lambda x: x[2], reverse=True)
+            return matches[0][1]
+        
+        # Default to neutral
+        return 6
     
     def detect_allergens(self, ingredients_list):
         """Detect allergens in a list of ingredients"""
