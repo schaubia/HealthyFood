@@ -18,7 +18,7 @@ PERFORMANCE GAINS:
 """
 
 import streamlit as st
-from transformers import AutoFeatureExtractor, AutoModelForImageClassification
+from transformers import AutoImageProcessor, AutoModelForImageClassification
 from PIL import Image
 import requests
 import os
@@ -248,12 +248,12 @@ class HybridFoodAnalyzer:
         try:
             model_name = "nateraw/food"
             logger.info(f"Loading ViT model: {model_name}")
-            
-            feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
+
+            processor = AutoImageProcessor.from_pretrained(model_name)
             model = AutoModelForImageClassification.from_pretrained(model_name)
-            
+
             logger.info("ViT model loaded successfully")
-            return feature_extractor, model
+            return processor, model
         except Exception as e:
             logger.error(f"Failed to load ViT model: {e}")
             st.error(f"⚠️ Could not load ViT model. Using ResNet only. Error: {str(e)}")
