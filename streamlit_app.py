@@ -992,6 +992,13 @@ class HybridFoodAnalyzer:
             'burrito': ['tortilla', 'rice', 'beans', 'meat', 'cheese', 'salsa'],
             'quesadilla': ['tortilla', 'cheese', 'chicken', 'peppers', 'onion'],
             'nachos': ['tortilla chips', 'cheese', 'beans', 'salsa', 'sour cream', 'jalapeno'],
+            'enchiladas': ['tortilla', 'chicken', 'cheese', 'enchilada sauce', 'onion'],
+            'fajitas': ['tortilla', 'chicken', 'beef', 'peppers', 'onion', 'sour cream'],
+            'guacamole': ['avocado', 'lime', 'onion', 'tomato', 'cilantro', 'salt'],
+            'tamales': ['corn dough', 'chicken', 'pork', 'chili sauce', 'corn husk'],
+            'chilaquiles': ['tortilla chips', 'salsa', 'cheese', 'egg', 'cream', 'onion'],
+            'tostadas': ['tostada shell', 'beans', 'lettuce', 'cheese', 'tomato', 'sour cream'],
+            'elote': ['corn', 'mayonnaise', 'cheese', 'lime', 'chili powder'],
             
             # Desserts
             'cake': ['flour', 'sugar', 'eggs', 'butter', 'milk', 'baking powder'],
