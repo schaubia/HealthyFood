@@ -1025,7 +1025,7 @@ class HybridFoodAnalyzer:
             'coleslaw': ['cabbage', 'carrot', 'mayonnaise', 'vinegar', 'sugar'],
             'potato salad': ['potato', 'egg', 'mayonnaise', 'mustard', 'onion', 'celery', 'pickle'],
             'pasta salad': ['pasta', 'tomato', 'cucumber', 'olive', 'pepper', 'olive oil', 'vinegar', 'feta'],
-            'fruit salad': ['apple', 'banana', 'orange', 'grapes', 'strawberry', 'honey', 'lemon juice'],
+            'fruit salad': ['apple', 'banana', 'orange', 'grapes', 'strawberry', 'honey', "cream"],
             'quinoa salad': ['quinoa', 'cucumber', 'tomato', 'red onion', 'parsley', 'lemon juice', 'olive oil'],
             'fattoush': ['lettuce', 'tomato', 'cucumber', 'radish', 'pita chips', 'sumac', 'lemon juice', 'olive oil'],
             'ovcharska salad': ['tomato', 'cucumber', 'pepper', 'onion', 'mushroom', 'egg', 'ham', 'white cheese', 'olive oil'],
