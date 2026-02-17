@@ -1017,6 +1017,18 @@ class HybridFoodAnalyzer:
             'greek salad': ['lettuce', 'tomato', 'cucumber', 'feta', 'olives', 'olive oil'],
             'salad': ['lettuce', 'tomato', 'cucumber', 'onion', 'olive oil', 'vinegar'],
             'shopska salad': ['tomato', 'cucumber', 'onion', 'pepper', 'white cheese', 'olive oil', 'vinegar'],
+            'caprese salad': ['tomato', 'mozzarella', 'basil', 'olive oil', 'balsamic vinegar'],
+            'cobb salad': ['lettuce', 'chicken', 'bacon', 'egg', 'avocado', 'tomato', 'blue cheese', 'ranch dressing'],
+            'waldorf salad': ['apple', 'celery', 'walnuts', 'grapes', 'mayonnaise', 'lettuce'],
+            'nicoise salad': ['lettuce', 'tuna', 'egg', 'green beans', 'potato', 'olives', 'olive oil'],
+            'tabbouleh': ['bulgur', 'parsley', 'tomato', 'onion', 'lemon juice', 'olive oil', 'mint'],
+            'coleslaw': ['cabbage', 'carrot', 'mayonnaise', 'vinegar', 'sugar'],
+            'potato salad': ['potato', 'egg', 'mayonnaise', 'mustard', 'onion', 'celery', 'pickle'],
+            'pasta salad': ['pasta', 'tomato', 'cucumber', 'olive', 'pepper', 'olive oil', 'vinegar', 'feta'],
+            'fruit salad': ['apple', 'banana', 'orange', 'grapes', 'strawberry', 'honey', 'lemon juice'],
+            'quinoa salad': ['quinoa', 'cucumber', 'tomato', 'red onion', 'parsley', 'lemon juice', 'olive oil'],
+            'fattoush': ['lettuce', 'tomato', 'cucumber', 'radish', 'pita chips', 'sumac', 'lemon juice', 'olive oil'],
+            'ovcharska salad': ['tomato', 'cucumber', 'pepper', 'onion', 'mushroom', 'egg', 'ham', 'white cheese', 'olive oil'],
             
             # Soups
             'chicken soup': ['chicken', 'broth', 'carrot', 'celery', 'onion', 'noodles'],
