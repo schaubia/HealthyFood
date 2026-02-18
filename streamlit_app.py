@@ -1011,6 +1011,12 @@ class HybridFoodAnalyzer:
             'creme brulee': ['cream', 'eggs', 'sugar', 'vanilla'],
             'tiramisu': ['mascarpone', 'eggs', 'coffee', 'sugar', 'ladyfingers', 'cocoa'],
             'apple pie': ['apples', 'flour', 'sugar', 'butter', 'cinnamon'],
+            'panna cotta': ['cream', 'sugar', 'vanilla', 'gelatin', 'milk'],
+            'baklava': ['phyllo dough', 'walnuts', 'butter', 'sugar', 'honey', 'cinnamon'],
+            'pancakes': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
+            'mousse au chocolat': ['chocolate', 'eggs', 'cream', 'sugar', 'vanilla'],
+            'banitza': ['phyllo dough', 'white cheese', 'eggs', 'yogurt', 'butter'],
+            'rice pudding': ['rice', 'milk', 'sugar', 'vanilla', 'cinnamon', 'butter'],
             
             # Salads
             'caesar salad': ['lettuce', 'parmesan', 'croutons', 'caesar dressing', 'chicken'],
