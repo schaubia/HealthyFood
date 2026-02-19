@@ -1062,7 +1062,20 @@ class HybridFoodAnalyzer:
             'steak': ['beef', 'salt', 'pepper', 'butter', 'garlic'],
             'chicken breast': ['chicken', 'salt', 'pepper', 'oil', 'herbs'],
             'pork chop': ['pork', 'salt', 'pepper', 'oil', 'garlic'],
-            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter']
+            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter'],
+            'roast chicken': ['whole chicken', 'butter', 'garlic', 'lemon', 'rosemary', 'thyme', 'salt', 'pepper'],
+            'beef stroganoff': ['beef', 'mushrooms', 'onion', 'sour cream', 'butter', 'mustard', 'broth'],
+            'lamb chops': ['lamb', 'garlic', 'rosemary', 'olive oil', 'salt', 'pepper', 'lemon'],
+            'meatballs': ['ground beef', 'breadcrumbs', 'egg', 'onion', 'garlic', 'parsley', 'tomato sauce'],
+            'chicken parmesan': ['chicken', 'breadcrumbs', 'parmesan', 'mozzarella', 'tomato sauce', 'egg', 'flour'],
+            'pulled pork': ['pork shoulder', 'bbq sauce', 'onion', 'garlic', 'brown sugar', 'paprika', 'vinegar'],
+            'kebab': ['lamb', 'onion', 'pepper', 'tomato', 'garlic', 'cumin', 'paprika', 'olive oil'],
+            'schnitzel': ['pork', 'flour', 'egg', 'breadcrumbs', 'oil', 'lemon', 'salt'],
+            'beef bourguignon': ['beef', 'red wine', 'carrot', 'onion', 'mushrooms', 'garlic', 'bacon', 'thyme'],
+            'teriyaki chicken': ['chicken', 'soy sauce', 'sugar', 'ginger', 'garlic', 'rice vinegar', 'sesame oil'],
+            'kavarma': ['pork', 'onion', 'pepper', 'tomato', 'mushrooms', 'garlic', 'paprika', 'egg'],
+            'kyufte': ['ground meat', 'onion', 'cumin', 'salt', 'pepper', 'breadcrumbs'],
+            'moussaka': ['potato', 'ground meat', 'onion', 'tomato', 'egg', 'yogurt', 'flour', 'paprika'],
         }
         
         if food_lower in ingredient_db:
