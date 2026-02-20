@@ -170,7 +170,8 @@ class HybridFoodAnalyzer:
                      'white toast', 'french toast', 'breadcrumbs', 'bulgur', 
                      'semolina', 'spelt', 'durum','farina', 'seitan', 'croutons'],
             
-            'soybeans': ['soy', 'soy sauce', 'tofu', 'tempeh', 'edamame', 'miso', 'soybeans'],
+            'soy': ['soy', 'soy sauce', 'tofu', 'tempeh', 'edamame', 'miso', 'soybeans',
+                    'soybean', 'soy milk', 'soy lecithin', 'soy protein'],
             
             'sesame': ['sesame', 'tahini', 'sesame oil', 'sesame seeds'],
             
