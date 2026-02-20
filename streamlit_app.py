@@ -157,7 +157,8 @@ class HybridFoodAnalyzer:
             'tree nuts': ['nuts', 'almonds', 'walnuts', 'cashews', 'pecans', 'pistachios',
                          'hazelnuts', 'macadamia', 'pine nuts', 'chestnuts', 'nut', 
                          'almond', 'walnut', 'cashew', 'pecan', 'pistachio',
-                         'hazelnut', 'pine nut', 'chestnut'],
+                         'brazil nut', 'pine nut', 'chestnut', 'praline',
+                         'marzipan', 'nougat', 'almond milk', 'almond flour', 'nutella'],
             
             'peanuts': ['peanuts', 'peanut butter', 'peanut oil', 'peanut'],
             
