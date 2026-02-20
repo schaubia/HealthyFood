@@ -160,13 +160,15 @@ class HybridFoodAnalyzer:
                          'brazil nut', 'pine nut', 'chestnut', 'praline',
                          'marzipan', 'nougat', 'almond milk', 'almond flour', 'nutella'],
             
-            'peanuts': ['peanuts', 'peanut butter', 'peanut oil', 'peanut'],
+            'peanuts': ['peanut', 'peanut butter', 'peanut oil', 'peanut flour',
+                    'groundnut', 'arachis oil', 'monkey nuts', 'satay sauce'],
             
             'wheat': ['wheat', 'flour', 'bread', 'pasta', 'noodles', 'couscous',
                      'crackers', 'bagel', 'croissant', 'pita', 'tortilla',
                      'whole wheat bread', 'white bread', 'pancakes', 'waffles',
                      'cake', 'cookie', 'brownie', 'muffin', 'donut', 'pastry',
-                     'white toast', 'french toast'],
+                     'white toast', 'french toast', 'breadcrumbs', 'bulgur', 
+                     'semolina', 'spelt', 'durum','farina', 'seitan', 'croutons'],
             
             'soybeans': ['soy', 'soy sauce', 'tofu', 'tempeh', 'edamame', 'miso', 'soybeans'],
             
