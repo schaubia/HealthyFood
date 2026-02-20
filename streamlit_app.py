@@ -149,7 +149,8 @@ class HybridFoodAnalyzer:
                     'custard', 'hollandaise', 'aioli', 'eggnog', 'quiche'],
             
             'fish': ['fish', 'salmon', 'tuna', 'cod', 'bass', 'sardines', 'sardine','mackerel',
-                    'anchovy', 'herring', 'trout', 'halibut', 'catfish'],
+                    'anchovy', 'herring', 'trout', 'halibut', 'catfish', 'tilapia', 'fish sauce', 
+                    'worcestershire sauce'],
             
             'shellfish': ['shrimp', 'crab', 'lobster', 'prawns', 'crayfish', 'mussels',
                          'oyster', 'clams', 'scallops', 'prawn', 'mussel', 'seafood'],
