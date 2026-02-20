@@ -173,7 +173,8 @@ class HybridFoodAnalyzer:
             'soy': ['soy', 'soy sauce', 'tofu', 'tempeh', 'edamame', 'miso', 'soybeans',
                     'soybean', 'soy milk', 'soy lecithin', 'soy protein'],
             
-            'sesame': ['sesame', 'tahini', 'sesame oil', 'sesame seeds'],
+            'sesame': ['sesame', 'tahini', 'sesame oil', 'sesame seeds', 'hummus',
+                    'halva', 'sesame paste', 'gomashio'],
             
             # Other Common Allergens
             'gluten': ['wheat', 'flour', 'bread', 'pasta', 'rye', 'barley', 'oats',
