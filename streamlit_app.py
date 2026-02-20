@@ -157,7 +157,7 @@ class HybridFoodAnalyzer:
                          'almond', 'walnut', 'cashew', 'pecan', 'pistachio',
                          'hazelnut', 'pine nut', 'chestnut'],
             
-            'peanuts': ['peanuts', 'peanut butter', 'peanut oil'],
+            'peanuts': ['peanuts', 'peanut butter', 'peanut oil', 'peanut'],
             
             'wheat': ['wheat', 'flour', 'bread', 'pasta', 'noodles', 'couscous',
                      'crackers', 'bagel', 'croissant', 'pita', 'tortilla',
