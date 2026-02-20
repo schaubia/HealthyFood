@@ -144,7 +144,9 @@ class HybridFoodAnalyzer:
                     'mozzarella', 'parmesan', 'cheddar', 'ricotta', 'feta', 'mascarpone',
                     'cottage cheese', 'greek yogurt', 'milkshake', 'dairy', 'whipped cream'],
             
-            'eggs': ['egg', 'eggs', 'mayonnaise', 'mayo'],
+            'eggs': ['egg', 'eggs', 'egg whites', 'egg yolks', 'mayonnaise', 'meringue',
+                    'albumin', 'globulin', 'lysozyme', 'lecithin', 'ovalbumin',
+                    'custard', 'hollandaise', 'aioli', 'eggnog', 'quiche'],
             
             'fish': ['fish', 'salmon', 'tuna', 'cod', 'bass', 'sardines', 'sardine','mackerel',
                     'anchovy', 'herring', 'trout', 'halibut', 'catfish'],
