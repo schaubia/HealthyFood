@@ -153,7 +153,8 @@ class HybridFoodAnalyzer:
                     'worcestershire sauce'],
             
             'shellfish': ['shrimp', 'crab', 'lobster', 'prawns', 'crayfish', 'mussels',
-                         'oyster', 'clams', 'scallops', 'prawn', 'mussel', 'seafood'],
+                         'oyster', 'clams', 'scallops', 'prawn', 'mussel', 'seafood',
+                         'clam', 'scallop', 'squid', 'octopus', 'crawfish'],
             
             'tree nuts': ['nuts', 'almonds', 'walnuts', 'cashews', 'pecans', 'pistachios',
                          'hazelnuts', 'macadamia', 'pine nuts', 'chestnuts', 'nut', 
