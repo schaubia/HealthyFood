@@ -5,7 +5,7 @@ Enhanced with:
 - Phase 2: Smart model selection, optimized health score lookups
 
 PHASE 2 NEW FEATURES:
-✅ Smart Model Selection - Uses only one model 80% of time (50% faster!)
+✅ Smart Model Selection - Uses only one model 80% of time (faster)
 ✅ Health Score Index - O(1) lookups instead of O(n)
 ✅ Model usage tracking
 ✅ Performance improvements
@@ -113,7 +113,7 @@ class HybridFoodAnalyzer:
         self.img_size = (224, 224)
         self.load_user_corrections()
         
-        # Initialize models lazily (only when needed)
+        # Initialize lazy models when needed
         self._vit_model = None
         self._vit_extractor = None
         self._resnet_model = None
@@ -122,7 +122,7 @@ class HybridFoodAnalyzer:
         self._model_usage = {'vit_only': 0, 'resnet_only': 0, 'both': 0}
         
         # PHASE 3: Tiny fallback list — only foods the USDA API handles poorly.
-        # All other foods are scored AUTOMATICALLY from real nutrition data.
+        # All other foods are scored automatically from real nutrition data.
         self.health_scores = {
             'water': 10,
             'soda': 1, 'cola': 1, 'energy drink': 1, 'candy': 1,
