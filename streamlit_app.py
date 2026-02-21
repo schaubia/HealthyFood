@@ -1,14 +1,20 @@
 """
-Food Health Analyzer - FULLY OPTIMIZED VERSION (Phase 1 + Phase 2)
+Food Health Analyzer - FULLY OPTIMIZED VERSION (Phase 1 + Phase 2 + Phase 3)
 Enhanced with:
 - Phase 1: Error handling, API caching, retry logic, lazy loading, logging
 - Phase 2: Smart model selection, optimized health score lookups
+- Phase 3: Automated USDA health scores, in-memory score caching, minimal fallback list
 
 PHASE 2 NEW FEATURES:
 ✅ Smart Model Selection - Uses only one model 80% of time (faster)
 ✅ Health Score Index - O(1) lookups instead of O(n)
 ✅ Model usage tracking
 ✅ Performance improvements
+
+PHASE 3 NEW FEATURES:
+✅ Automated health score from USDA API — no hardcoded values needed
+✅ In-memory cache for auto-calculated scores
+✅ Tiny fallback list only for foods the USDA API handles poorly
 
 PERFORMANCE GAINS:
 - 50% faster predictions (smart model selection)
