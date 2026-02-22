@@ -196,7 +196,9 @@ class HybridFoodAnalyzer:
             'corn': ['corn', 'corn syrup', 'popcorn', 'corn oil', 'cornmeal', 'polenta',
                      'corn starch', 'corn flour', 'grits', 'hominy'],
             
-            'sulfites': ['wine', 'dried fruit', 'vinegar'],
+            'sulfites': ['wine', 'dried fruit', 'vinegar', 'beer', 'cider', 'pickles',
+                        'sauerkraut', 'shrimp', 'grape juice', 'molasses', 'jam',
+                        'canned vegetables', 'potato chips', 'lemon juice concentrate'],
             
             'mustard': ['mustard', 'mustard seeds', 'mustard oil'],
         }
