@@ -193,7 +193,8 @@ class HybridFoodAnalyzer:
                       'soy sauce', 'beer', 'malt', 'brewer\'s yeast', 'doughnut', 'pastry',
                       'phyllo dough', 'pizza dough', 'sourdough', 'brioche', 'focaccia', 'ciabatta'],
             
-            'corn': ['corn', 'corn syrup', 'popcorn', 'corn oil', 'cornmeal', 'polenta'],
+            'corn': ['corn', 'corn syrup', 'popcorn', 'corn oil', 'cornmeal', 'polenta',
+                     'corn starch', 'corn flour', 'grits', 'hominy'],
             
             'sulfites': ['wine', 'dried fruit', 'vinegar'],
             
