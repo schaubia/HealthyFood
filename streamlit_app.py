@@ -186,7 +186,12 @@ class HybridFoodAnalyzer:
             
             # Other Common Allergens
             'gluten': ['wheat', 'flour', 'bread', 'pasta', 'rye', 'barley', 'oats',
-                      'noodles', 'couscous', 'seitan', 'cracker', 'crackers', 'bagel', 'pancakes', 'pancake'],
+                      'noodles', 'couscous', 'seitan', 'cracker', 'crackers', 'bagel', 'pancakes', 'pancake',
+                      'croissant', 'muffin', 'waffle', 'pretzel', 'tortilla', 'pita', 'biscuit',
+                      'cake', 'cookie', 'pie crust', 'breadcrumbs', 'croutons', 'bulgur',
+                      'semolina', 'spelt', 'durum', 'farina', 'graham', 'matzo',
+                      'soy sauce', 'beer', 'malt', 'brewer\'s yeast', 'doughnut', 'pastry',
+                      'phyllo dough', 'pizza dough', 'sourdough', 'brioche', 'focaccia', 'ciabatta'],
             
             'corn': ['corn', 'corn syrup', 'popcorn', 'corn oil', 'cornmeal', 'polenta'],
             
