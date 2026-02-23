@@ -212,7 +212,7 @@ class HybridFoodAnalyzer:
             'tree nuts': {'severity': 'high', 'emoji': '🌰', 'description': 'Tree Nuts'},
             'peanuts': {'severity': 'high', 'emoji': '🥜', 'description': 'Peanuts'},
             'wheat': {'severity': 'medium', 'emoji': '🌾', 'description': 'Wheat'},
-            'soybeans': {'severity': 'medium', 'emoji': '🫘', 'description': 'Soy'},
+            'soy': {'severity': 'medium', 'emoji': '🫘', 'description': 'Soy'},
             'sesame': {'severity': 'medium', 'emoji': '🫘', 'description': 'Sesame'},
             'gluten': {'severity': 'medium', 'emoji': '🌾', 'description': 'Gluten'},
             'corn': {'severity': 'low', 'emoji': '🌽', 'description': 'Corn'},
