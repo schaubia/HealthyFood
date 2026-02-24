@@ -165,7 +165,7 @@ class HybridFoodAnalyzer:
             'tree nuts': ['nuts', 'almonds', 'walnuts', 'cashews', 'pecans', 'pistachios',
                          'hazelnuts', 'macadamia', 'pine nuts', 'chestnuts', 'nut', 
                          'almond', 'walnut', 'cashew', 'pecan', 'pistachio',
-                         'brazil nut', 'pine nut', 'chestnut', 'praline',
+                         'brazil nut', 'pine nut', 'chestnut','praline',
                          'marzipan', 'nougat', 'almond milk', 'almond flour', 'nutella'],
             
             'peanuts': ['peanut', 'peanut butter', 'peanut oil', 'peanut flour',
@@ -174,7 +174,8 @@ class HybridFoodAnalyzer:
             'wheat': ['wheat', 'flour', 'bread', 'pasta', 'noodles', 'couscous',
                      'crackers', 'bagel', 'croissant', 'pita', 'tortilla',
                      'whole wheat bread', 'white bread', 'pancakes', 'waffles',
-                     'cake', 'cookie', 'brownie', 'muffin', 'donut', 'pastry',
+                     'cake','cookie', 'brownie', 'muffin', 'donut', 'pastry',
+                     'cookies', 'brownies', 'muffins', 'donuts', 'croissants',
                      'white toast', 'french toast', 'breadcrumbs', 'bulgur', 
                      'semolina', 'spelt', 'durum','farina', 'seitan', 'croutons'],
             
