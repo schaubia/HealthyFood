@@ -121,69 +121,16 @@ class HybridFoodAnalyzer:
         # PHASE 2: Track model usage statistics
         self._model_usage = {'vit_only': 0, 'resnet_only': 0, 'both': 0}
         
-        # PHASE 3: Complete manual scores (priority) + auto-calculation fallback
-        # Manual scores are used first - only calculate from USDA if not found here.
+        # PHASE 3: Tiny fallback list — only foods the USDA API handles poorly.
+        # All other foods are scored AUTOMATICALLY from real nutrition data.
         self.health_scores = {
-            # Very Healthy Foods (8-10 points)
-            'vegetables': 9, 'broccoli': 10, 'spinach': 10, 'kale': 10, 'beet': 9, 'beetroot': 9,
-            'carrot': 9, 'tomato': 9, 'lettuce': 9, 'cucumber': 9, 'bell pepper': 9, 
-            'zucchini': 9,'cauliflower': 9, 'brussels sprouts': 9, 'asparagus': 9, 'celery': 9,
-            'onion': 8, 'garlic': 9, 'ginger': 8, 'fruits': 8, 'fruit': 8,'apple': 10, 'banana': 8, 
-            'orange': 9, 'berries': 10, 'strawberry': 10, 'blueberry': 10, 'raspberry': 10, 
-            'cherry':10,  'strawberries': 10, 'blueberries': 10, 'raspberries': 10,
-            'peach':9,  'quince':10, 'nectarine':9, 'apricot':9, 'medlar':9, 'melon':9, "persimmon":9,
-            'watermelon': 9, 'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9,
-            'salmon': 8, 'tuna': 8, 'sardines': 9, 'mackerel': 9, 'fish': 8, 'kohlrabi':10, 
-            'turnip':9, 'artichoke':10, 'salad': 9, 'arugula':9, 'rocket salad':9, 'rumex':10, 
-            'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7, 'seafood': 7,
-            'chicken breast': 8, 'turkey': 8, 'lean meat': 8, 'chicken': 7,
-            'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
-            'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
-            'greek yogurt': 8, 'cottage cheese': 8, 'white cheese': 8, 'tempeh': 8, 'edamame': 9, 'hummus': 8, 
-            'seaweed': 9, 'herbs': 8, 'basil': 8, 'parsley': 8, 'cilantro': 8, 'dill':9, 
-            'lime': 8, 'lemon': 8, 'mushroom': 9, 'fungi':9, 'peppers': 9,
-            
-            # Moderately Healthy/Neutral Foods (5-7 points)
-            'pasta': 6, 'white rice': 6, 'bread': 6, 'whole wheat bread': 6,
-            'rice': 6, 'noodles': 6, 'couscous': 6, 'polenta': 6,
-            'potato': 6, 'sweet potato': 7, 'corn': 5, 'peas': 7,
-            'egg': 7, 'eggs': 7, 'cheese': 6, 'milk': 7, 'yogurt': 7,
-            'peanut butter': 6, 'honey': 6, 'dark chocolate': 7, 'peanuts': 6,
-            'olive oil': 7, 'coconut oil': 6, 'butter': 5, 'oil': 5, 'cream': 5,
-            'pork': 6, 'beef': 6, 'lamb': 6, 'sausage': 5, 'meat': 6,
-            'soup': 6, 'stew': 6, 'curry': 6, 'chili': 5, 'pickles': 5,
-            'sandwich': 5, 'wrap': 5, 'taco': 5, 'burrito': 5,
-            'sushi': 7, 'maki': 7, 'nigiri': 7, 'mustard': 5, 'cinnamon': 7, 
-            'smoothie': 7, 'protein shake': 6, 'juice': 6,
-            'granola': 6, 'cereal': 6, 'muesli': 7, 'bagel': 5,
-            'tortilla': 6, 'pita': 6, 'crackers': 5, 'vinegar': 7, 
-            'salt': 5, 'pepper': 7, 'spices': 7, 'yeast': 6,
-            'flour': 5, 'wheat': 6, 'water': 10, 'broth': 6,
-            'soy sauce': 5, 'salsa': 6, 'sauce': 5, 'marinara': 6, 'pesto': 6,
-            'mozzarella': 6, 'parmesan': 6, 'ricotta': 6, 'cheddar': 5,
-            'cream cheese': 5, 'sour cream': 5, 'mascarpone': 5, 'burrata': 5,
-            'cocoa': 6, 'chocolate': 5, 'vanilla': 6, 'coffee': 6,
-            'rice paper': 6, 'seitan': 7, 'chickpea': 9,'milkshake': 5,
-            'chocolate bar': 5,  'gelato': 5, 'pancakes': 5,'pancake': 5,
-            
-            # Unhealthy Foods (1-4 points)
-            'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,
-            'french fries': 2, 'fries': 2, 'chips': 2, 'nachos': 3, 'feta': 4, 
-            'hot dog': 3, 'corn dog': 2, 'fried chicken': 3, 'ketchup': 3, 
-            'doughnut': 2, 'donut': 2, 'pastry': 3, 'croissant': 4, 'popcorn': 4,
-            'cake': 3, 'cupcake': 2, 'brownie': 3, 'cookie': 4, 'cookies': 4,
-            'candy': 1,  'soda': 1, 'energy drink': 1, 'sports drink': 2,
-            'baking powder': 3, 'baking soda': 3,'tofu': 3, 'mayo': 4, 'mayonnaise': 4,
-            'bacon': 3, 'pepperoni': 2, 'salami': 2, 'hot wings': 3,
-            'fried': 2, 'deep fried': 2, 'battered': 2, 'breaded': 3, 'breadcrumbs': 3,
-            'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
-            'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4,
-            'ramen': 4, 'instant noodles': 3, 'cup noodles': 3,
-            'white bread': 4, 'white toast': 3,  'waffles': 4, 'waffle': 4,'ice cream': 4,
-            'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
+            'water': 10,
+            'soda': 1, 'cola': 1, 'energy drink': 1, 'candy': 1,
+            'deep fried': 2, 'chips': 2, 'french fries': 2,
         }
 
-        # PHASE 3: Cache for USDA auto-calculated scores (used only when not in manual list)
+        # PHASE 3: In-memory cache for auto-calculated scores so we never
+        # hit the USDA API twice for the same food within a session.
         self._auto_score_cache = {}
         
         # PHASE 2: Build optimized health score index for O(1) lookups
@@ -699,61 +646,41 @@ class HybridFoodAnalyzer:
 
     def get_health_score(self, food_name: str) -> int:
         """
-        PHASE 3: Hybrid scoring — manual scores first, USDA auto-calculation as fallback
+        PHASE 3: Automated health score — no hardcoded values needed!
 
         Priority order:
-          1. Manual health_scores dict (200+ curated entries)  ← YOUR ENTRIES
-          2. Token matching in manual dict (partial matches)
-          3. Session cache (previously auto-calculated)
-          4. USDA API → calculate from real nutrition data
-          5. Fallback: 6 (neutral)
-        
-        This gives you full control while still handling unknown foods automatically!
+          1. In-memory session cache  (instant)
+          2. Tiny fallback dict       (instant, covers edge cases)
+          3. USDA API → calculate from real nutrition data  (cached 24 h)
+          4. Fallback: 5 (neutral)
         """
         food_lower = food_name.lower().strip()
 
-        # 1. Exact match in manual scores (PRIORITY - your curated list)
-        if food_lower in self.health_scores:
-            logger.info(f"Manual score for '{food_lower}': {self.health_scores[food_lower]}/10")
-            return self.health_scores[food_lower]
-
-        # 2. Token matching in manual scores (e.g., "green apple" finds "apple")
-        tokens = food_lower.split()
-        matches = []
-        for key, score in self.health_scores.items():
-            # Check if any key is in the food name or vice versa
-            if key in food_lower or food_lower in key:
-                matches.append((key, score, len(key)))
-            # Also check token-by-token
-            for token in tokens:
-                if len(token) > 2 and token in key:
-                    matches.append((key, score, len(key)))
-
-        if matches:
-            # Sort by length (most specific first) and return best match
-            matches.sort(key=lambda x: x[2], reverse=True)
-            logger.info(f"Matched '{food_lower}' to manual entry '{matches[0][0]}': {matches[0][1]}/10")
-            return matches[0][1]
-
-        # 3. Check session cache (previously auto-calculated this session)
+        # 1. Session cache
         if food_lower in self._auto_score_cache:
-            logger.info(f"Using cached auto-score for '{food_lower}': {self._auto_score_cache[food_lower]}/10")
             return self._auto_score_cache[food_lower]
 
-        # 4. Calculate from USDA nutrition data (NEW foods not in your manual list)
+        # 2. Fallback dict (only a handful of entries now)
+        if food_lower in self.health_scores:
+            return self.health_scores[food_lower]
+        for key, score in self.health_scores.items():
+            if key in food_lower or food_lower in key:
+                return score
+
+        # 3. Calculate from USDA data
         try:
             nutrition = self.fetch_nutrition_data_cached(food_lower)
             if nutrition and nutrition.get('nutrients'):
                 score = self.calculate_score_from_nutrients(nutrition['nutrients'])
                 self._auto_score_cache[food_lower] = score
-                logger.info(f"✨ Auto-scored '{food_lower}': {score}/10 from USDA nutrients")
+                logger.info(f"Auto-scored '{food_lower}': {score}/10 from USDA data")
                 return score
         except Exception as e:
             logger.warning(f"Auto-scoring failed for '{food_lower}': {e}")
 
-        # 5. Neutral fallback (no data anywhere)
-        logger.info(f"No score data for '{food_lower}', defaulting to 6")
-        return 6
+        # 4. Neutral fallback
+        logger.info(f"No score data for '{food_lower}', defaulting to 5")
+        return 5
     
     def detect_allergens(self, ingredients_list):
         """Detect allergens in a list of ingredients"""
