@@ -136,7 +136,7 @@ class HybridFoodAnalyzer:
             'salmon': 8, 'tuna': 8, 'sardines': 9, 'mackerel': 9, 'fish': 8, 'kohlrabi':10, 
             'turnip':9, 'artichoke':10, 'salad': 9, 'arugula':9, 'rocket salad':9, 'rumex':10, 
             'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7, 'seafood': 7,
-            'chicken breast': 8, 'turkey': 8, 'lean meat': 8, 'chicken': 7,
+            'chicken breast': 7, 'turkey': 8, 'lean meat': 8, 'chicken': 7,
             'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
             'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,
             'greek yogurt': 8, 'cottage cheese': 8, 'white cheese': 8, 'tempeh': 8, 'edamame': 9, 'hummus': 8, 
