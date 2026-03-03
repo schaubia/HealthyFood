@@ -1,0 +1,25 @@
+# ================================================
+# MINIMAL - ResNet Only (Most Reliable for Cloud)
+# Use this for guaranteed deployment on free tier
+# ================================================
+
+streamlit>=1.28.0
+
+# TensorFlow CPU only - much lighter
+tensorflow-cpu>=2.13.0,<2.16.0
+
+# Core dependencies
+Pillow>=10.0.0
+numpy>=1.24.0,<2.0.0
+requests>=2.31.0
+
+# Optional but recommended
+Wikipedia-API>=0.6.0
+
+# System dependencies
+protobuf>=3.20.0,<5.0.0
+h5py>=3.8.0
+
+# Total size: ~450MB
+# Memory usage: ~300MB
+# Works on: Free tier ✅
