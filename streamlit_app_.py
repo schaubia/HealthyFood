@@ -1,14 +1,20 @@
 """
-Food Health Analyzer - FULLY OPTIMIZED VERSION (Phase 1 + Phase 2)
+Food Health Analyzer - FULLY OPTIMIZED VERSION (Phase 1 + Phase 2 + Phase 3)
 Enhanced with:
 - Phase 1: Error handling, API caching, retry logic, lazy loading, logging
 - Phase 2: Smart model selection, optimized health score lookups
+- Phase 3: Automated USDA health scores, in-memory score caching, minimal fallback list
 
 PHASE 2 NEW FEATURES:
-✅ Smart Model Selection - Uses only one model 80% of time (50% faster!)
+✅ Smart Model Selection - Uses only one model 80% of time (faster)
 ✅ Health Score Index - O(1) lookups instead of O(n)
 ✅ Model usage tracking
 ✅ Performance improvements
+
+PHASE 3 NEW FEATURES:
+✅ Automated health score from USDA API — no hardcoded values needed
+✅ In-memory cache for auto-calculated scores
+✅ Tiny fallback list only for foods the USDA API handles poorly
 
 PERFORMANCE GAINS:
 - 50% faster predictions (smart model selection)
@@ -113,7 +119,7 @@ class HybridFoodAnalyzer:
         self.img_size = (224, 224)
         self.load_user_corrections()
         
-        # Initialize models lazily (only when needed)
+        # Initialize lazy models when needed
         self._vit_model = None
         self._vit_extractor = None
         self._resnet_model = None
@@ -121,47 +127,16 @@ class HybridFoodAnalyzer:
         # PHASE 2: Track model usage statistics
         self._model_usage = {'vit_only': 0, 'resnet_only': 0, 'both': 0}
         
-        # PHASE 3: Complete manual scores (priority) + auto-calculation fallback
-        # Manual scores are used first - only calculate from USDA if not found here.
+        # PHASE 3: Tiny fallback list — only foods the USDA API handles poorly.
+        # All other foods are scored automatically from real nutrition data.
         self.health_scores = {
-            # Very Healthy Foods (8-10 points)
-            'vegetables': 9, 'broccoli': 10, 'spinach': 10, 'kale': 10, 'beet': 9, 'beetroot': 9,'carrot': 9, 'tomato': 9, 
-            'lettuce': 9, 'cucumber': 9, 'bell pepper': 9, 'zucchini': 9,'cauliflower': 9, 'brussels sprouts': 9, 
-            'asparagus': 9, 'celery': 9, 'onion': 8, 'garlic': 9, 'ginger': 8, 'fruits': 8, 'fruit': 8,'apple': 10, 'banana': 8, 
-            'orange': 9, 'berries': 10, 'strawberry': 10, 'blueberry': 10, 'raspberry': 10, 'cherry':10,  'strawberries': 10, 
-            'blueberries': 10, 'raspberries': 10,'peach':9,  'quince':10, 'nectarine':9, 'apricot':9, 'medlar':9, 'melon':9, 
-            'persimmon':9, 'watermelon': 9, 'pear': 8, 'grape': 8, 'pineapple': 8, 'mango': 8, 'avocado': 9, 'kohlrabi': 10, 
-            'turnip':9, 'artichoke':10, 'salad': 9, 'arugula':9, 'rocket salad':9, 'rumex':10, 'mushroom': 9, 'fungi':9, 'peppers': 9, 
-            'seafood': 7, 'tuna': 8, 'sardines': 9, 'mackerel': 9, 'fish': 8, 'salmon':8, 'shrimp': 7, 'crab': 7, 'lobster': 7, 'mussels': 7, 
-            'chicken breast': 7, 'turkey': 8, 'lean meat': 8, 'chicken': 7,'lentils': 9, 'chickpeas': 9, 'beans': 9, 'quinoa': 9, 'oatmeal': 9,
-            'brown rice': 8, 'whole grain': 8, 'nuts': 8, 'almonds': 8, 'walnuts': 9,'greek yogurt': 8, 'cottage cheese': 8, 'white cheese': 8, 
-            'tempeh': 8, 'edamame': 9, 'hummus': 8, 'seaweed': 9, 'herbs': 8, 'basil': 8, 'parsley': 8, 'cilantro': 8, 'dill':9, 
-            'lime': 8, 'lemon': 8, 
-            
-            # Moderately Healthy/Neutral Foods (5-7 points)
-            'pasta': 6, 'white rice': 6, 'bread': 6, 'whole wheat bread': 6,'rice': 6, 'noodles': 6, 'couscous': 6, 'polenta': 6,
-            'potato': 6, 'sweet potato': 7, 'corn': 5, 'peas': 7,'egg': 7, 'eggs': 7, 'cheese': 6, 'milk': 7, 'yogurt': 7,
-            'peanut butter': 6, 'honey': 6, 'dark chocolate': 7, 'peanuts': 6, 'olive oil': 7, 'coconut oil': 6, 'butter': 5, 
-            'oil': 5, 'cream': 5,'pork': 6, 'beef': 6, 'lamb': 6, 'sausage': 5, 'meat': 6,'soup': 6, 'stew': 6, 'curry': 6, 
-            'chili': 5, 'pickles': 5,'sandwich': 5, 'wrap': 5, 'taco': 5, 'burrito': 5,'sushi': 7, 'maki': 7, 'nigiri': 7, 
-            'mustard': 5, 'cinnamon': 7, 'smoothie': 7, 'protein shake': 6, 'juice': 6,'granola': 6, 'cereal': 6, 'muesli': 7, 
-            'bagel': 5,'tortilla': 6, 'pita': 6, 'crackers': 5, 'vinegar': 7, 'salt': 5, 'pepper': 7, 'spices': 7, 'yeast': 6,
-            'flour': 5, 'wheat': 6, 'water': 10, 'broth': 6,'soy sauce': 5, 'salsa': 6, 'sauce': 5, 'marinara': 6, 'pesto': 6,
-            'mozzarella': 6, 'parmesan': 6, 'ricotta': 6, 'cheddar': 5,'cream cheese': 5, 'sour cream': 5, 'mascarpone': 5, 'burrata': 5,
-            'cocoa': 6, 'chocolate': 5, 'vanilla': 6, 'coffee': 6,'rice paper': 6, 'seitan': 7, 'chickpea': 9,'milkshake': 5,
-            'chocolate bar': 5,  'gelato': 5, 'pancakes': 5,'pancake': 5,
-            
-            # Unhealthy Foods (1-4 points)
-            'pizza': 4, 'burger': 3, 'hamburger': 3, 'cheeseburger': 3,'french fries': 2, 'fries': 2, 'chips': 2, 'nachos': 3, 'feta': 4, 
-            'hot dog': 3, 'corn dog': 2, 'fried chicken': 3, 'ketchup': 3, 'doughnut': 2, 'donut': 2, 'pastry': 3, 'croissant': 4, 'popcorn': 4,
-            'cake': 3, 'cupcake': 2, 'brownie': 3, 'cookie': 4, 'cookies': 4,'candy': 1,  'soda': 1, 'energy drink': 1, 'sports drink': 2,
-            'baking powder': 3, 'baking soda': 3,'tofu': 3, 'mayo': 4, 'mayonnaise': 4, 'bacon': 3, 'pepperoni': 2, 'salami': 2, 'hot wings': 3,
-            'fried': 2, 'deep fried': 2, 'battered': 2, 'breaded': 3, 'breadcrumbs': 3,'onion rings': 2, 'mozzarella sticks': 3, 'cheese fries': 2,
-            'mac and cheese': 4, 'alfredo': 3, 'carbonara': 4,'ramen': 4, 'instant noodles': 3, 'cup noodles': 3,'white bread': 4, 'white toast': 3,  
-            'waffles': 4, 'waffle': 4,'ice cream': 4,'syrup': 2, 'jam': 4, 'frosting': 2, 'whipped cream': 3
+            'water': 10,
+            'soda': 1, 'cola': 1, 'energy drink': 1, 'candy': 1,
+            'deep fried': 2, 'chips': 2, 'french fries': 2,
         }
 
-        # PHASE 3: Cache for USDA auto-calculated scores (used only when not in manual list)
+        # PHASE 3: In-memory cache for auto-calculated scores so we never
+        # hit the USDA API twice for the same food within a session.
         self._auto_score_cache = {}
         
         # PHASE 2: Build optimized health score index for O(1) lookups
@@ -175,38 +150,56 @@ class HybridFoodAnalyzer:
                     'mozzarella', 'parmesan', 'cheddar', 'ricotta', 'feta', 'mascarpone',
                     'cottage cheese', 'greek yogurt', 'milkshake', 'dairy', 'whipped cream'],
             
-            'eggs': ['egg', 'eggs', 'mayonnaise', 'mayo'],
+            'eggs': ['egg', 'eggs', 'egg whites', 'egg yolks', 'mayonnaise', 'meringue',
+                    'albumin', 'globulin', 'lysozyme', 'lecithin', 'ovalbumin',
+                    'custard', 'hollandaise', 'aioli', 'eggnog', 'quiche'],
             
             'fish': ['fish', 'salmon', 'tuna', 'cod', 'bass', 'sardines', 'sardine','mackerel',
-                    'anchovy', 'herring', 'trout', 'halibut', 'catfish'],
+                    'anchovy', 'herring', 'trout', 'halibut', 'catfish', 'tilapia', 'fish sauce', 
+                    'worcestershire sauce'],
             
             'shellfish': ['shrimp', 'crab', 'lobster', 'prawns', 'crayfish', 'mussels',
-                         'oyster', 'clams', 'scallops', 'prawn', 'mussel', 'seafood'],
+                         'oyster', 'clams', 'scallops', 'prawn', 'mussel', 'seafood',
+                         'clam', 'scallop', 'squid', 'octopus', 'crawfish'],
             
             'tree nuts': ['nuts', 'almonds', 'walnuts', 'cashews', 'pecans', 'pistachios',
                          'hazelnuts', 'macadamia', 'pine nuts', 'chestnuts', 'nut', 
                          'almond', 'walnut', 'cashew', 'pecan', 'pistachio',
-                         'hazelnut', 'pine nut', 'chestnut'],
+                         'brazil nut', 'pine nut', 'chestnut','praline',
+                         'marzipan', 'nougat', 'almond milk', 'almond flour', 'nutella'],
             
-            'peanuts': ['peanuts', 'peanut butter', 'peanut oil'],
+            'peanuts': ['peanut', 'peanut butter', 'peanut oil', 'peanut flour',
+                    'groundnut', 'arachis oil', 'monkey nuts', 'satay sauce'],
             
             'wheat': ['wheat', 'flour', 'bread', 'pasta', 'noodles', 'couscous',
                      'crackers', 'bagel', 'croissant', 'pita', 'tortilla',
                      'whole wheat bread', 'white bread', 'pancakes', 'waffles',
-                     'cake', 'cookie', 'brownie', 'muffin', 'donut', 'pastry',
-                     'white toast', 'french toast'],
+                     'cake','cookie', 'brownie', 'muffin', 'donut', 'pastry',
+                     'cookies', 'brownies', 'muffins', 'donuts', 'croissants',
+                     'white toast', 'french toast', 'breadcrumbs', 'bulgur', 
+                     'semolina', 'spelt', 'durum','farina', 'seitan', 'croutons'],
             
-            'soybeans': ['soy', 'soy sauce', 'tofu', 'tempeh', 'edamame', 'miso', 'soybeans'],
+            'soy': ['soy', 'soy sauce', 'tofu', 'tempeh', 'edamame', 'miso', 'soybeans',
+                    'soybean', 'soy milk', 'soy lecithin', 'soy protein'],
             
-            'sesame': ['sesame', 'tahini', 'sesame oil', 'sesame seeds'],
+            'sesame': ['sesame', 'tahini', 'sesame oil', 'sesame seeds', 'hummus',
+                    'halva', 'sesame paste', 'gomashio'],
             
             # Other Common Allergens
             'gluten': ['wheat', 'flour', 'bread', 'pasta', 'rye', 'barley', 'oats',
-                      'noodles', 'couscous', 'seitan', 'cracker', 'crackers', 'bagel', 'pancakes', 'pancake'],
+                      'noodles', 'couscous', 'seitan', 'cracker', 'crackers', 'bagel', 'pancakes', 'pancake',
+                      'croissant', 'muffin', 'waffle', 'pretzel', 'tortilla', 'pita', 'biscuit',
+                      'cake', 'cookie', 'pie crust', 'breadcrumbs', 'croutons', 'bulgur',
+                      'semolina', 'spelt', 'durum', 'farina', 'graham', 'matzo',
+                      'soy sauce', 'beer', 'malt', 'brewer\'s yeast', 'doughnut', 'pastry',
+                      'phyllo dough', 'pizza dough', 'sourdough', 'brioche', 'focaccia', 'ciabatta'],
             
-            'corn': ['corn', 'corn syrup', 'popcorn', 'corn oil', 'cornmeal', 'polenta'],
+            'corn': ['corn', 'corn syrup', 'popcorn', 'corn oil', 'cornmeal', 'polenta',
+                     'corn starch', 'corn flour', 'grits', 'hominy'],
             
-            'sulfites': ['wine', 'dried fruit', 'vinegar'],
+            'sulfites': ['wine', 'dried fruit', 'vinegar', 'beer', 'cider', 'pickles',
+                        'sauerkraut', 'shrimp', 'grape juice', 'molasses', 'jam',
+                        'canned vegetables', 'potato chips', 'lemon juice concentrate'],
             
             'mustard': ['mustard', 'mustard seeds', 'mustard oil'],
         }
@@ -220,7 +213,7 @@ class HybridFoodAnalyzer:
             'tree nuts': {'severity': 'high', 'emoji': '🌰', 'description': 'Tree Nuts'},
             'peanuts': {'severity': 'high', 'emoji': '🥜', 'description': 'Peanuts'},
             'wheat': {'severity': 'medium', 'emoji': '🌾', 'description': 'Wheat'},
-            'soybeans': {'severity': 'medium', 'emoji': '🫘', 'description': 'Soy'},
+            'soy': {'severity': 'medium', 'emoji': '🫘', 'description': 'Soy'},
             'sesame': {'severity': 'medium', 'emoji': '🫘', 'description': 'Sesame'},
             'gluten': {'severity': 'medium', 'emoji': '🌾', 'description': 'Gluten'},
             'corn': {'severity': 'low', 'emoji': '🌽', 'description': 'Corn'},
@@ -677,61 +670,41 @@ class HybridFoodAnalyzer:
 
     def get_health_score(self, food_name: str) -> int:
         """
-        PHASE 3: Hybrid scoring — manual scores first, USDA auto-calculation as fallback
+        PHASE 3: Automated health score — no hardcoded values needed!
 
         Priority order:
-          1. Manual health_scores dict (200+ curated entries)  ← YOUR ENTRIES
-          2. Token matching in manual dict (partial matches)
-          3. Session cache (previously auto-calculated)
-          4. USDA API → calculate from real nutrition data
-          5. Fallback: 6 (neutral)
-        
-        This gives you full control while still handling unknown foods automatically!
+          1. In-memory session cache  (instant)
+          2. Tiny fallback dict       (instant, covers edge cases)
+          3. USDA API → calculate from real nutrition data  (cached 24 h)
+          4. Fallback: 5 (neutral)
         """
         food_lower = food_name.lower().strip()
 
-        # 1. Exact match in manual scores (PRIORITY - your curated list)
-        if food_lower in self.health_scores:
-            logger.info(f"Manual score for '{food_lower}': {self.health_scores[food_lower]}/10")
-            return self.health_scores[food_lower]
-
-        # 2. Token matching in manual scores (e.g., "green apple" finds "apple")
-        tokens = food_lower.split()
-        matches = []
-        for key, score in self.health_scores.items():
-            # Check if any key is in the food name or vice versa
-            if key in food_lower or food_lower in key:
-                matches.append((key, score, len(key)))
-            # Also check token-by-token
-            for token in tokens:
-                if len(token) > 2 and token in key:
-                    matches.append((key, score, len(key)))
-
-        if matches:
-            # Sort by length (most specific first) and return best match
-            matches.sort(key=lambda x: x[2], reverse=True)
-            logger.info(f"Matched '{food_lower}' to manual entry '{matches[0][0]}': {matches[0][1]}/10")
-            return matches[0][1]
-
-        # 3. Check session cache (previously auto-calculated this session)
+        # 1. Session cache
         if food_lower in self._auto_score_cache:
-            logger.info(f"Using cached auto-score for '{food_lower}': {self._auto_score_cache[food_lower]}/10")
             return self._auto_score_cache[food_lower]
 
-        # 4. Calculate from USDA nutrition data (NEW foods not in your manual list)
+        # 2. Fallback dict (only a handful of entries now)
+        if food_lower in self.health_scores:
+            return self.health_scores[food_lower]
+        for key, score in self.health_scores.items():
+            if key in food_lower or food_lower in key:
+                return score
+
+        # 3. Calculate from USDA data
         try:
             nutrition = self.fetch_nutrition_data_cached(food_lower)
             if nutrition and nutrition.get('nutrients'):
                 score = self.calculate_score_from_nutrients(nutrition['nutrients'])
                 self._auto_score_cache[food_lower] = score
-                logger.info(f"✨ Auto-scored '{food_lower}': {score}/10 from USDA nutrients")
+                logger.info(f"Auto-scored '{food_lower}': {score}/10 from USDA data")
                 return score
         except Exception as e:
             logger.warning(f"Auto-scoring failed for '{food_lower}': {e}")
 
-        # 5. Neutral fallback (no data anywhere)
-        logger.info(f"No score data for '{food_lower}', defaulting to 6")
-        return 6
+        # 4. Neutral fallback
+        logger.info(f"No score data for '{food_lower}', defaulting to 5")
+        return 5
     
     def detect_allergens(self, ingredients_list):
         """Detect allergens in a list of ingredients"""
@@ -1043,6 +1016,13 @@ class HybridFoodAnalyzer:
             'burrito': ['tortilla', 'rice', 'beans', 'meat', 'cheese', 'salsa'],
             'quesadilla': ['tortilla', 'cheese', 'chicken', 'peppers', 'onion'],
             'nachos': ['tortilla chips', 'cheese', 'beans', 'salsa', 'sour cream', 'jalapeno'],
+            'enchiladas': ['tortilla', 'chicken', 'cheese', 'enchilada sauce', 'onion'],
+            'fajitas': ['tortilla', 'chicken', 'beef', 'peppers', 'onion', 'sour cream'],
+            'guacamole': ['avocado', 'lime', 'onion', 'tomato', 'cilantro', 'salt'],
+            'tamales': ['corn dough', 'chicken', 'pork', 'chili sauce', 'corn husk'],
+            'chilaquiles': ['tortilla chips', 'salsa', 'cheese', 'egg', 'cream', 'onion'],
+            'tostadas': ['tostada shell', 'beans', 'lettuce', 'cheese', 'tomato', 'sour cream'],
+            'elote': ['corn', 'mayonnaise', 'cheese', 'lime', 'chili powder'],
             
             # Desserts
             'cake': ['flour', 'sugar', 'eggs', 'butter', 'milk', 'baking powder'],
@@ -1055,12 +1035,30 @@ class HybridFoodAnalyzer:
             'creme brulee': ['cream', 'eggs', 'sugar', 'vanilla'],
             'tiramisu': ['mascarpone', 'eggs', 'coffee', 'sugar', 'ladyfingers', 'cocoa'],
             'apple pie': ['apples', 'flour', 'sugar', 'butter', 'cinnamon'],
+            'panna cotta': ['cream', 'sugar', 'vanilla', 'gelatin', 'milk'],
+            'baklava': ['phyllo dough', 'walnuts', 'butter', 'sugar', 'honey', 'cinnamon'],
+            'pancakes': ['flour', 'eggs', 'milk', 'sugar', 'butter', 'baking powder'],
+            'mousse au chocolat': ['chocolate', 'eggs', 'cream', 'sugar', 'vanilla'],
+            'banitza': ['phyllo dough', 'white cheese', 'eggs', 'yogurt', 'butter'],
+            'rice pudding': ['rice', 'milk', 'sugar', 'vanilla', 'cinnamon', 'butter'],
             
             # Salads
             'caesar salad': ['lettuce', 'parmesan', 'croutons', 'caesar dressing', 'chicken'],
             'greek salad': ['lettuce', 'tomato', 'cucumber', 'feta', 'olives', 'olive oil'],
             'salad': ['lettuce', 'tomato', 'cucumber', 'onion', 'olive oil', 'vinegar'],
             'shopska salad': ['tomato', 'cucumber', 'onion', 'pepper', 'white cheese', 'olive oil', 'vinegar'],
+            'caprese salad': ['tomato', 'mozzarella', 'basil', 'olive oil', 'balsamic vinegar'],
+            'cobb salad': ['lettuce', 'chicken', 'bacon', 'egg', 'avocado', 'tomato', 'blue cheese', 'ranch dressing'],
+            'waldorf salad': ['apple', 'celery', 'walnuts', 'grapes', 'mayonnaise', 'lettuce'],
+            'nicoise salad': ['lettuce', 'tuna', 'egg', 'green beans', 'potato', 'olives', 'olive oil'],
+            'tabbouleh': ['bulgur', 'parsley', 'tomato', 'onion', 'lemon juice', 'olive oil', 'mint'],
+            'coleslaw': ['cabbage', 'carrot', 'mayonnaise', 'vinegar', 'sugar'],
+            'potato salad': ['potato', 'egg', 'mayonnaise', 'mustard', 'onion', 'celery', 'pickle'],
+            'pasta salad': ['pasta', 'tomato', 'cucumber', 'olive', 'pepper', 'olive oil', 'vinegar', 'feta'],
+            'fruit salad': ['apple', 'banana', 'orange', 'grapes', 'strawberry', 'honey', "cream"],
+            'quinoa salad': ['quinoa', 'cucumber', 'tomato', 'red onion', 'parsley', 'lemon juice', 'olive oil'],
+            'fattoush': ['lettuce', 'tomato', 'cucumber', 'radish', 'pita chips', 'sumac', 'lemon juice', 'olive oil'],
+            'ovcharska salad': ['tomato', 'cucumber', 'pepper', 'onion', 'mushroom', 'egg', 'ham', 'white cheese', 'olive oil'],
             
             # Soups
             'chicken soup': ['chicken', 'broth', 'carrot', 'celery', 'onion', 'noodles'],
@@ -1068,12 +1066,40 @@ class HybridFoodAnalyzer:
             'minestrone': ['pasta', 'beans', 'tomato', 'carrot', 'celery', 'onion'],
             'mushroom soup': ['mushrooms', 'cream', 'garlic', 'onion', 'thyme', 'parsley'],
             'goulash': ['beef', 'pepper', 'garlic', 'onion', 'tomato', 'cheddar', 'noodles'],
+            'french onion soup': ['onion', 'beef broth', 'butter', 'gruyere', 'bread', 'thyme'],
+            'clam chowder': ['clams', 'potato', 'cream', 'bacon', 'onion', 'celery', 'butter'],
+            'lentil soup': ['lentils', 'carrot', 'onion', 'celery', 'garlic', 'cumin', 'broth'],
+            'pumpkin soup': ['pumpkin', 'cream', 'onion', 'garlic', 'nutmeg', 'butter', 'broth'],
+            'broccoli cheddar soup': ['broccoli', 'cheddar', 'cream', 'onion', 'garlic', 'butter', 'broth'],
+            'pho': ['rice noodles', 'beef', 'beef broth', 'onion', 'ginger', 'star anise', 'basil', 'lime'],
+            'miso soup': ['miso paste', 'tofu', 'seaweed', 'green onion', 'dashi'],
+            'borscht': ['beetroot', 'cabbage', 'potato', 'carrot', 'onion', 'garlic', 'sour cream', 'dill'],
+            'gazpacho': ['tomato', 'cucumber', 'pepper', 'onion', 'garlic', 'olive oil', 'vinegar', 'bread'],
+            'hot and sour soup': ['tofu', 'mushrooms', 'egg', 'bamboo shoots', 'vinegar', 'soy sauce', 'chili'],
+            'corn chowder': ['corn', 'potato', 'cream', 'bacon', 'onion', 'celery', 'butter'],
+            'shkembe chorba': ['tripe', 'milk', 'garlic', 'vinegar', 'chili', 'butter'],
+            'tarator': ['yogurt', 'cucumber', 'garlic', 'dill', 'walnuts', 'water', 'olive oil'],
+            'bean soup': ['beans', 'carrot', 'onion', 'tomato', 'pepper', 'mint', 'olive oil'],
+            'tortilla soup': ['chicken', 'tomato', 'onion', 'garlic', 'chili', 'tortilla chips', 'avocado', 'lime'],
             
             # Meat dishes
             'steak': ['beef', 'salt', 'pepper', 'butter', 'garlic'],
             'chicken breast': ['chicken', 'salt', 'pepper', 'oil', 'herbs'],
             'pork chop': ['pork', 'salt', 'pepper', 'oil', 'garlic'],
-            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter']
+            'fish fillet': ['fish', 'salt', 'pepper', 'lemon', 'butter'],
+            'roast chicken': ['whole chicken', 'butter', 'garlic', 'lemon', 'rosemary', 'thyme', 'salt', 'pepper'],
+            'beef stroganoff': ['beef', 'mushrooms', 'onion', 'sour cream', 'butter', 'mustard', 'broth'],
+            'lamb chops': ['lamb', 'garlic', 'rosemary', 'olive oil', 'salt', 'pepper', 'lemon'],
+            'meatballs': ['ground beef', 'breadcrumbs', 'egg', 'onion', 'garlic', 'parsley', 'tomato sauce'],
+            'chicken parmesan': ['chicken', 'breadcrumbs', 'parmesan', 'mozzarella', 'tomato sauce', 'egg', 'flour'],
+            'pulled pork': ['pork shoulder', 'bbq sauce', 'onion', 'garlic', 'brown sugar', 'paprika', 'vinegar'],
+            'kebab': ['lamb', 'onion', 'pepper', 'tomato', 'garlic', 'cumin', 'paprika', 'olive oil'],
+            'schnitzel': ['pork', 'flour', 'egg', 'breadcrumbs', 'oil', 'lemon', 'salt'],
+            'beef bourguignon': ['beef', 'red wine', 'carrot', 'onion', 'mushrooms', 'garlic', 'bacon', 'thyme'],
+            'teriyaki chicken': ['chicken', 'soy sauce', 'sugar', 'ginger', 'garlic', 'rice vinegar', 'sesame oil'],
+            'kavarma': ['pork', 'onion', 'pepper', 'tomato', 'mushrooms', 'garlic', 'paprika', 'egg'],
+            'kyufte': ['ground meat', 'onion', 'cumin', 'salt', 'pepper', 'breadcrumbs'],
+            'moussaka': ['potato', 'ground meat', 'onion', 'tomato', 'egg', 'yogurt', 'flour', 'paprika'],
         }
         
         if food_lower in ingredient_db:
@@ -1579,38 +1605,41 @@ def main():
                 else:
                     st.error("⚠️ Watch Intake")
             
-            st.markdown("**Key Nutrients (per 100g):**")
-            
-            priority = [
-                'Energy', 'Protein', 'Total lipid (fat)',
-                'Carbohydrate, by difference', 'Fiber, total dietary',
-                'Sugars, total including NLEA', 'Sodium, Na', 'Cholesterol'
-            ]
-            
-            nutrient_data = []
-            displayed = set()
-            
-            for nutrient in priority:
-                if nutrient in nutrients:
-                    nutrient_data.append([nutrient, nutrients[nutrient]])
-                    displayed.add(nutrient)
-            
-            for nutrient, value in nutrients.items():
-                if nutrient not in displayed and len(displayed) < 15:
-                    nutrient_data.append([nutrient, value])
-                    displayed.add(nutrient)
-            
-            if nutrient_data:
-                col1, col2 = st.columns(2)
-                mid = len(nutrient_data) // 2
+            # Detailed nutrients in expandable section with arrow
+            with st.expander("🔽 **Click to see detailed nutrients (per 100g)**"):
+                priority = [
+                    'Energy', 'Protein', 'Total lipid (fat)',
+                    'Carbohydrate, by difference', 'Fiber, total dietary',
+                    'Sugars, total including NLEA', 'Sodium, Na', 'Cholesterol'
+                ]
                 
-                with col1:
-                    for nutrient, value in nutrient_data[:mid]:
-                        st.write(f"• **{nutrient}:** {value}")
+                nutrient_data = []
+                displayed = set()
                 
-                with col2:
-                    for nutrient, value in nutrient_data[mid:]:
-                        st.write(f"• **{nutrient}:** {value}")
+                # Add priority nutrients first
+                for nutrient in priority:
+                    if nutrient in nutrients:
+                        nutrient_data.append([nutrient, nutrients[nutrient]])
+                        displayed.add(nutrient)
+                
+                # Add remaining nutrients (up to 15 total)
+                for nutrient, value in nutrients.items():
+                    if nutrient not in displayed and len(displayed) < 15:
+                        nutrient_data.append([nutrient, value])
+                        displayed.add(nutrient)
+                
+                if nutrient_data:
+                    # Display in two columns
+                    col1, col2 = st.columns(2)
+                    mid = len(nutrient_data) // 2
+                    
+                    with col1:
+                        for nutrient, value in nutrient_data[:mid]:
+                            st.write(f"• **{nutrient}:** {value}")
+                    
+                    with col2:
+                        for nutrient, value in nutrient_data[mid:]:
+                            st.write(f"• **{nutrient}:** {value}")
         else:
             st.info(f"ℹ️ Nutritional information not available for '{top_food}' in the USDA database.")
     
