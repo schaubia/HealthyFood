@@ -1053,7 +1053,7 @@ class HybridFoodAnalyzer:
             'nicoise salad': ['lettuce', 'tuna', 'egg', 'green beans', 'potato', 'olives', 'olive oil'],
             'tabbouleh': ['bulgur', 'parsley', 'tomato', 'onion', 'lemon juice', 'olive oil', 'mint'],
             'coleslaw': ['cabbage', 'carrot', 'mayonnaise', 'vinegar', 'sugar'],
-            'potato salad': ['potato', 'egg', 'mayonnaise', 'mustard', 'onion', 'celery', 'pickle'],
+            'potato salad': ['potato', 'egg', 'mayonnaise', 'mustard', 'onion', 'celery', 'pickles'],
             'pasta salad': ['pasta', 'tomato', 'cucumber', 'olive', 'pepper', 'olive oil', 'vinegar', 'feta'],
             'fruit salad': ['apple', 'banana', 'orange', 'grapes', 'strawberry', 'honey', "cream"],
             'quinoa salad': ['quinoa', 'cucumber', 'tomato', 'red onion', 'parsley', 'lemon juice', 'olive oil'],
