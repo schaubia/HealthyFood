@@ -528,7 +528,7 @@ class HybridFoodAnalyzer:
                     if analysis['is_simple_ingredient']:
                         st.success("**Type:** Simple Ingredient → Using ResNet only")
                     elif analysis['is_complex_dish']:
-                        st.info("**Type:** Complex Dish → Using ViT (ResNet fallback if unavailable)")
+                        st.info("**Type:** Complex Dish → Using ViT only")
                     else:
                         st.warning("**Type:** Uncertain → Using both models")
                     
@@ -561,16 +561,11 @@ class HybridFoodAnalyzer:
                 final_results = food_results if food_results else results
                 
             elif analysis['is_complex_dish']:
-                # Use ViT for complex dishes, fall back to ResNet if ViT unavailable
-                logger.info("Smart selection: Using ViT for complex dish (ResNet fallback active)")
+                # Use ONLY ViT for complex dishes
+                logger.info("Smart selection: Using ViT only (complex dish)")
                 self._model_usage['vit_only'] += 1
                 
                 final_results = self.predict_with_vit(img)
-                
-                # FALLBACK: if ViT failed (e.g. torchvision not installed), use ResNet
-                if not final_results:
-                    logger.warning("ViT returned no results — falling back to ResNet")
-                    final_results = self.predict_with_resnet(img)
                 
             else:
                 # Use BOTH when uncertain (safety first)
@@ -585,11 +580,7 @@ class HybridFoodAnalyzer:
                     if any(kw in r['name'].lower() for kw in food_keywords)
                 ]
                 
-                # If ViT returned nothing, use all ResNet results (not just food-filtered)
-                if not vit_results and not food_resnet:
-                    final_results = resnet_results
-                else:
-                    final_results = vit_results + food_resnet
+                final_results = vit_results + food_resnet
                 final_results.sort(key=lambda x: x['confidence'], reverse=True)
             
             # Add features to results
@@ -1317,8 +1308,7 @@ def main():
             predictions = analyzer.predict_food_smart(img)
             
             if not predictions:
-                st.error("❌ Failed to analyze image. Both AI models returned no results.")
-                st.info("💡 **Tip:** Make sure `torchvision` is installed (`pip install torchvision`) or check that TensorFlow is available. ResNet will work without ViT.")
+                st.error("❌ Failed to analyze image. Please try again with a different image.")
                 st.stop()
             
             st.subheader("🤖 AI Predictions")
