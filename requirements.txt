@@ -18,3 +18,5 @@ requests>=2.31.0
 
 # Additional Tools
 Wikipedia-API>=0.6.0
+
+torchvision
