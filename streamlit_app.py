@@ -41,6 +41,7 @@ import time
 import logging
 from functools import lru_cache
 import hashlib
+from recipe_finder import render_fridge_page, search_web_recipes_by_dish
 
 # Configure logging
 logging.basicConfig(
@@ -1203,7 +1204,13 @@ def main():
         st.error(f"❌ Failed to initialize analyzer: {str(e)}")
         logger.error(f"Analyzer initialization failed: {e}", exc_info=True)
         st.stop()
-    
+
+    # Mode switch: image analysis (existing) or fridge-based recipe finder (new)
+    mode = st.sidebar.radio("Mode", ["📸 Analyze food image", "🥕 What's in my fridge?"])
+    if mode == "🥕 What's in my fridge?":
+        render_fridge_page(analyzer)
+        return
+
     # Sidebar
     with st.sidebar:
         st.header("🧠 Learning Statistics")
@@ -1582,7 +1589,20 @@ def main():
                 st.info("💡 **Note:** This is an automated detection based on ingredient names. Always verify with the manufacturer or restaurant for accurate allergen information.")
             
             st.markdown("---")
-        
+
+        # Recipes from the web for the recognised dish
+        with st.expander(f"🌐 Recipes for {top_food.title()} from the web"):
+            web_recipes = search_web_recipes_by_dish(top_food)
+            if web_recipes:
+                for wr in web_recipes:
+                    st.markdown(f"**{wr['name']}** ({wr['area']})")
+                    st.caption(", ".join(wr['ingredients']))
+                    if wr['url']:
+                        st.markdown(f"[🔗 Open recipe]({wr['url']})")
+            else:
+                st.write("No web recipes found for this dish. "
+                         "Try the 🥕 *What's in my fridge?* mode in the sidebar.")
+
         # USDA nutrition data
         with st.spinner("🔍 Fetching USDA nutritional data..."):
             nutrition_data = analyzer.fetch_nutrition_data_cached(top_food)
