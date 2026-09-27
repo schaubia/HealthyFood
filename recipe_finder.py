@@ -56,6 +56,38 @@ SYNONYMS = {
     'spring onions': 'green onion', 'scallions': 'green onion',
     'lemon juice': 'lemon', 'лимон': 'lemon',
     'butter': 'butter', 'масло': 'butter',
+    'морков': 'carrot', 'моркови': 'carrot', 'целина': 'celery',
+    'зеле': 'cabbage', 'карфиол': 'cauliflower', 'броколи': 'broccoli',
+    'спанак': 'spinach', 'маруля': 'lettuce', 'салата': 'lettuce',
+    'тиква': 'pumpkin', 'цвекло': 'beetroot', 'beet': 'beetroot', 'beets': 'beetroot',
+    'репички': 'radish', 'зелен боб': 'green beans', 'грах': 'peas',
+    'царевица': 'corn', 'sweetcorn': 'corn', 'маслини': 'olive', 'праз': 'leek',
+    'пресен лук': 'green onion', 'люта чушка': 'chili pepper', 'chilli': 'chili pepper',
+    'сладък картоф': 'sweet potato', 'ябълка': 'apple', 'ябълки': 'apple',
+    'круша': 'pear', 'банан': 'banana', 'портокал': 'orange', 'ягоди': 'strawberry',
+    'сметана': 'cream', 'double cream': 'cream', 'heavy cream': 'cream',
+    'заквасена сметана': 'sour cream', 'извара': 'cottage cheese',
+    'моцарела': 'mozzarella', 'пармезан': 'parmesan',
+    'свинско': 'pork', 'телешко': 'beef', 'агнешко': 'lamb', 'пуйка': 'turkey',
+    'бекон': 'bacon', 'шунка': 'ham', 'наденица': 'sausage', 'риба': 'fish',
+    'сьомга': 'salmon', 'риба тон': 'tuna', 'скариди': 'shrimp', 'prawns': 'shrimp',
+    'макарони': 'pasta', 'спагети': 'spaghetti', 'хляб': 'bread',
+    'галета': 'breadcrumbs', 'овесени ядки': 'oats', 'rolled oats': 'oats',
+    'булгур': 'bulgur', 'кускус': 'couscous', 'кори': 'phyllo dough',
+    'filo pastry': 'phyllo dough', 'filo': 'phyllo dough', 'phyllo': 'phyllo dough',
+    'царевично брашно': 'cornmeal', 'боб': 'beans', 'нахут': 'chickpeas',
+    'леща': 'lentils', 'бадеми': 'almond', 'фъстъци': 'peanut', 'лешници': 'hazelnut',
+    'сусам': 'sesame', 'магданоз': 'parsley', 'босилек': 'basil', 'мента': 'mint',
+    'джоджен': 'mint', 'риган': 'oregano', 'мащерка': 'thyme', 'чубрица': 'savory',
+    'розмарин': 'rosemary', 'кориандър': 'cilantro', 'coriander': 'cilantro',
+    'дафинов лист': 'bay leaf', 'bay leaves': 'bay leaf', 'червен пипер': 'paprika',
+    'кимион': 'cumin', 'канела': 'cinnamon', 'джинджифил': 'ginger',
+    'доматено пюре': 'tomato paste', 'tomato puree': 'tomato paste',
+    'chopped tomatoes': 'canned tomatoes', 'оцет': 'vinegar', 'горчица': 'mustard',
+    'майонеза': 'mayonnaise', 'mayo': 'mayonnaise', 'мед': 'honey',
+    'шоколад': 'chocolate', 'какао': 'cocoa', 'бакпулвер': 'baking powder',
+    'сода': 'baking soda', 'мая': 'yeast', 'бульон': 'stock', 'broth': 'stock',
+    'chicken stock': 'stock', 'vegetable stock': 'stock', 'вино': 'wine',
 }
 
 # Offline recipes — ingredients use canonical names from SYNONYMS
@@ -171,6 +203,54 @@ LOCAL_RECIPES = [
 ]
 
 
+# Ingredients offered in the drop-down, grouped so the list is easy to extend.
+# Use the canonical names (the right-hand side of SYNONYMS).
+COMMON_INGREDIENTS = {
+    'Vegetables': [
+        'zucchini', 'tomato', 'cucumber', 'pepper (vegetable)', 'chili pepper',
+        'onion', 'green onion', 'leek', 'garlic', 'potato', 'sweet potato',
+        'carrot', 'celery', 'cabbage', 'cauliflower', 'broccoli', 'spinach',
+        'lettuce', 'eggplant', 'mushroom', 'pumpkin', 'beetroot', 'radish',
+        'green beans', 'peas', 'corn', 'asparagus', 'kale', 'olive',
+    ],
+    'Fruit': [
+        'lemon', 'lime', 'orange', 'apple', 'pear', 'banana', 'strawberry',
+        'blueberry', 'grape', 'peach', 'plum', 'cherry', 'avocado', 'raisin',
+    ],
+    'Dairy & eggs': [
+        'egg', 'milk', 'yogurt', 'butter', 'cream', 'sour cream', 'feta',
+        'cheese', 'mozzarella', 'parmesan', 'cream cheese', 'cottage cheese',
+        'ricotta',
+    ],
+    'Meat & fish': [
+        'chicken', 'minced meat', 'pork', 'beef', 'lamb', 'turkey', 'bacon',
+        'ham', 'sausage', 'fish', 'salmon', 'tuna', 'shrimp',
+    ],
+    'Grains, pasta & bread': [
+        'flour', 'rice', 'pasta', 'spaghetti', 'noodles', 'bread',
+        'breadcrumbs', 'oats', 'bulgur', 'couscous', 'quinoa', 'phyllo dough',
+        'tortilla', 'cornmeal',
+    ],
+    'Beans & legumes': [
+        'beans', 'white beans', 'chickpeas', 'lentils', 'tofu',
+    ],
+    'Nuts & seeds': [
+        'walnut', 'almond', 'peanut', 'hazelnut', 'sesame', 'sunflower seeds',
+    ],
+    'Herbs & spices': [
+        'dill', 'parsley', 'basil', 'mint', 'oregano', 'thyme', 'rosemary',
+        'cilantro', 'bay leaf', 'paprika', 'cumin', 'cinnamon', 'ginger',
+        'savory', 'chili powder', 'nutmeg', 'curry powder',
+    ],
+    'Pantry': [
+        'tomato paste', 'canned tomatoes', 'vinegar', 'soy sauce', 'mustard',
+        'mayonnaise', 'ketchup', 'honey', 'jam', 'chocolate', 'cocoa',
+        'baking powder', 'baking soda', 'yeast', 'stock', 'coconut milk',
+        'wine',
+    ],
+}
+
+
 # ──────────────────────────────────────────────────────────────
 # Ingredient helpers
 # ──────────────────────────────────────────────────────────────
@@ -189,17 +269,28 @@ def parse_fridge(text: str, selected: list) -> set:
     return {normalize(i) for i in items if i and i.strip()}
 
 
+def _singular(word: str) -> str:
+    """Very small plural stripper: carrots→carrot, tomatoes→tomato, peas→pea."""
+    if len(word) > 4 and word.endswith('oes'):
+        return word[:-2]
+    if len(word) > 3 and word.endswith('s') and not word.endswith('ss'):
+        return word[:-1]
+    return word
+
+
 def ingredient_matches(recipe_ing: str, fridge: set) -> bool:
     """'plain flour' matches 'flour'; 'greek yogurt' matches 'yogurt'."""
     ing = normalize(recipe_ing)
     if ing in fridge:
         return True
-    words = set(ing.replace('(', ' ').replace(')', ' ').split())
+    ing_sing = ' '.join(_singular(w) for w in ing.split())
+    words = set(ing_sing.replace('(', ' ').replace(')', ' ').split())
     for f in fridge:
-        if ' ' in f:
-            if f in ing:          # multi-word item, e.g. 'minced meat'
+        f_sing = ' '.join(_singular(w) for w in f.split())
+        if ' ' in f_sing:
+            if f_sing in ing_sing:   # multi-word item, e.g. 'minced meat'
                 return True
-        elif normalize(f) in words or f in words:  # 'flour' in 'plain flour'
+        elif f_sing in words:        # 'flour' in 'plain flour', 'carrot' in 'carrots'
             return True
     return False
 
@@ -336,10 +427,7 @@ def render_fridge_page(analyzer):
     st.markdown("Tell me what you have and I'll suggest recipes — "
                 "from the web and from a built-in Balkan/Greek collection.")
 
-    common = ['zucchini', 'yogurt', 'flour', 'egg', 'feta', 'tomato', 'cucumber',
-              'pepper (vegetable)', 'onion', 'garlic', 'potato', 'rice', 'chicken',
-              'minced meat', 'mushroom', 'cheese', 'milk', 'butter', 'dill', 'walnut',
-              'eggplant', 'lemon']
+    common = [item for group in COMMON_INGREDIENTS.values() for item in group]
 
     col1, col2 = st.columns([2, 1])
     with col1:
